@@ -2,9 +2,7 @@
 import math
 import random
 
-ANCHO, ALTO = 960, 720
-NIDO = (735, 485)
-RADIO_NIDO = 74
+from ajustes import ALTO, ANCHO, NIDO, RADIO_NIDO
 
 
 def dentro_nido(pos):

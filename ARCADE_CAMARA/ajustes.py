@@ -1,0 +1,16 @@
+"""Dimensiones, paleta y parámetros compartidos del juego."""
+
+ANCHO, ALTO = 960, 720
+NIDO = (735, 485)
+RADIO_NIDO = 74
+FPS = 60
+CAMARA_ANCHO, CAMARA_ALTO = 640, 480
+CAMARA_FPS = 60
+CONFIANZA_MANO = 0.6
+RETENCION_DETECCION = 0.55
+
+FONDO = (25, 19, 40)
+CREMA = (247, 239, 210)
+LIMA = (213, 210, 161)
+CORAL = (242, 198, 134)
+VIOLETA = (185, 140, 247)

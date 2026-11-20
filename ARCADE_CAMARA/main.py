@@ -5,12 +5,11 @@ import random
 import sys
 from pathlib import Path
 
-import cv2
 import pygame
 
-from juego import ANCHO, ALTO, NIDO, Partida
-from mano import ControlMano
-from entrada_camara import EntradaCamara
+from juego import NIDO, Partida
+from vision import abrir_camara, redimensionar
+from ajustes import ALTO, ANCHO, FPS, FONDO, CREMA, LIMA, CORAL, VIOLETA
 from efectos import Efectos
 from sonido import Sonido
 from particulas import Particulas
@@ -30,11 +29,6 @@ from interfaz import limpiar_cache
 from diario import Diario, REPETIR, VOLVER, DIARIO_MENU
 from companero import Companero, guia as guia_gesto
 
-FONDO = (25, 19, 40)
-CREMA = (247, 239, 210)
-LIMA = (213, 210, 161)
-CORAL = (242, 198, 134)
-VIOLETA = (185, 140, 247)
 
 
 def texto(pantalla, fuentes, contenido, pos, tam=24, color=CREMA, centro=False):
@@ -158,7 +152,7 @@ def guia_camara(pantalla, frame, control, fuentes, cerrada, pequena=False):
     """Vista espejo pequeña: el marco marca el recorrido cómodo de dedos."""
     rect=pygame.Rect(12,105,156,117) if pequena else pygame.Rect(666,112,244,183)
     panel(pantalla,rect.inflate(10,10))
-    mini=cv2.resize(frame,rect.size)
+    mini=redimensionar(frame,rect.size)
     pantalla.blit(pygame.image.frombuffer(mini.tobytes(),rect.size,'BGR'),rect)
     puntos=getattr(control,'puntos',[])
     if len(puntos)==21:
@@ -180,7 +174,6 @@ def guia_camara(pantalla, frame, control, fuentes, cerrada, pequena=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--camera', type=int, default=0)
-    parser.add_argument('--demo', action='store_true', help='Probar con mouse, sin cámara')
     args = parser.parse_args()
     pygame.mixer.pre_init(44100,-16,2,512)
     pygame.init()
@@ -226,7 +219,6 @@ def main():
     reloj = pygame.time.Clock()
     control = None
     ancho_control_anterior=ANCHO
-    camara = None
     entrada = None
     frame = None
     estado = 'menu'
@@ -234,7 +226,6 @@ def main():
     elegido = 1
     particulas = Particulas()
     efectos = Efectos()
-    raton = args.demo
     pausado = False
     cerrada = False
     pos = None
@@ -253,28 +244,12 @@ def main():
     jugar = pygame.Rect(305,522,350,62)
     repetir = REPETIR
     try:
-        if not args.demo:
-            control = ControlMano()
-            # DirectShow evita los bloqueos que vimos con MSMF en esta PC.
-            camara = cv2.VideoCapture(args.camera, cv2.CAP_DSHOW)
-            if not camara.isOpened():
-                camara.release()
-                for indice in (0,1,2):
-                    if indice==args.camera:continue
-                    camara=cv2.VideoCapture(indice,cv2.CAP_DSHOW)
-                    if camara.isOpened():break
-                    camara.release()
-            camara.set(cv2.CAP_PROP_FRAME_WIDTH,640)
-            camara.set(cv2.CAP_PROP_FRAME_HEIGHT,480)
-            camara.set(cv2.CAP_PROP_FPS,60)
-            camara.set(cv2.CAP_PROP_BUFFERSIZE,1)
-            if not camara.isOpened():
-                error = 'No se pudo abrir la cámara. Cerrá otras apps o usá F2.'
-            else:
-                entrada=EntradaCamara(camara,control)
+        entrada = abrir_camara(args.camera)
+        if entrada is None:
+            error = 'No se pudo abrir la cámara. Cerrá otras apps y reiniciá el juego.'
         andando = True
         while andando:
-            dt = min(reloj.tick(60)/1000, .08)
+            dt = min(reloj.tick(FPS)/1000, .08)
             ahora = pygame.time.get_ticks()/1000
             if ahora-ultima_medicion>.5:
                 pygame.display.set_caption(f'{NOMBRE} · {reloj.get_fps():.0f} FPS · Esc: menú')
@@ -303,10 +278,6 @@ def main():
                     elif evento.key == pygame.K_F11:
                         completa = not completa
                         ventana = pygame.display.set_mode(escritorio,pygame.NOFRAME) if completa else pygame.display.set_mode((ancho_vista,ALTO),pygame.RESIZABLE)
-                    elif evento.key == pygame.K_F2:
-                        raton = not raton
-                        cerrada = False
-                        pos = None
                     elif evento.key == pygame.K_p and estado == 'juego':
                         pausado = not pausado
                     elif evento.key in (pygame.K_RETURN,pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4):
@@ -323,27 +294,19 @@ def main():
             if not andando:
                 break
 
-            if not raton:
-                if entrada is not None:
-                    ancho_control=ancho_vista if estado=='menu' else ANCHO
-                    referencia='palma' if estado=='menu' or (estado=='juego' and elegido==3) else 'indice'
-                    entrada.configurar(ancho_control,ALTO,referencia)
-                    muestra=entrada.leer()
-                    if muestra is not None:
-                        frame,pos,cerrada,mordida,control=muestra
-                        error=''
-                    else:
-                        pos,cerrada=None,False
-                        error='Esperando imagen de la cámara…'
+            if entrada is not None:
+                ancho_control=ancho_vista if estado=='menu' else ANCHO
+                referencia='palma' if estado=='menu' or (estado=='juego' and elegido==3) else 'indice'
+                entrada.configurar(ancho_control,ALTO,referencia)
+                muestra=entrada.leer()
+                if muestra is not None:
+                    frame,pos,cerrada,mordida,control=muestra
+                    error=''
                 else:
-                    pos,cerrada=None,False
-            else:
-                pos = coordenadas_raton()
-                anterior = cerrada
-                cerrada = pygame.mouse.get_pressed()[0]
-                mordida = cerrada and not anterior
-            if estado=='menu' and not raton and control is not None:
-                pos=pos if control.puntos else None
+                    pos, cerrada = None, False
+                    error = 'Esperando imagen de la cámara…'
+            if estado == 'menu' and control is not None:
+                pos = pos if control.puntos else None
             sin_mano = pos is None
             sonido.juego = elegido
             if estado=='juego' and getattr(companero,'partida',None) is not partida:
@@ -359,7 +322,7 @@ def main():
             paso_dt=0 if preparando else dt
             activar = click or mordida
             puntero = coordenadas_raton() if click else pos
-            if mordida and not raton and control is not None:
+            if mordida and control is not None:
                 puntero=getattr(control,'pos_evento',None) or pos
 
             fondo_activo = bosque if estado in ('menu','diario','resultado') else mundos[elegido-1]
@@ -379,7 +342,7 @@ def main():
                 pantalla.blit(lienzo,(-margen,0))
             if estado=='juego' and frame is not None:
                 if frame is not frame_reflejo or tam_reflejo!=(ANCHO,ALTO):
-                    cam=cv2.resize(frame,(ANCHO,ALTO))
+                    cam=redimensionar(frame,(ANCHO,ALTO))
                     reflejo=pygame.image.frombuffer(cam.tobytes(),(ANCHO,ALTO),'BGR').copy()
                     reflejo.set_alpha(48)
                     frame_reflejo=frame
@@ -398,12 +361,12 @@ def main():
                 if logo_menu is not None:
                     pantalla.blit(logo_menu,logo_menu.get_rect(center=(640,73)))
                 palma=pos
-                abierta=not raton and control is not None and bool(control.puntos)
+                abierta=control is not None and bool(control.puntos)
                 coleccion.actualizar(dt,[palma],gesto=abierta,cerrada=cerrada)
                 coleccion.dibujar(pantalla)
-                if frame is not None and not raton:
+                if frame is not None:
                     if frame is not frame_reflejo or tam_reflejo!=(ancho_vista,ALTO):
-                        espejo=cv2.resize(frame,(ancho_vista,ALTO))
+                        espejo=redimensionar(frame,(ancho_vista,ALTO))
                         reflejo=pygame.image.frombuffer(espejo.tobytes(),(ancho_vista,ALTO),'BGR').copy()
                         reflejo.set_alpha(44)
                         frame_reflejo=frame
@@ -411,7 +374,7 @@ def main():
                     pantalla.blit(reflejo,(0,142),(0,142,ancho_vista,490))
                 diario.insignias(pantalla,coleccion.rects)
                 diario.boton_menu(pantalla,puntero)
-                if click or (mordida and puntero is not None and DIARIO_MENU.collidepoint(puntero)) or (not raton and coleccion.listo):
+                if click or (mordida and puntero is not None and DIARIO_MENU.collidepoint(puntero)) or (coleccion.listo):
                     if puntero and DIARIO_MENU.collidepoint(puntero):
                         estado='diario'
                     else:
@@ -530,7 +493,7 @@ def main():
                 escribir(pantalla,'¡Prepará tu mano!',(480,386),26,titulo=True)
             if estado!='menu':
                 regreso.dibujar(pantalla)
-            if mostrar_camara and frame is not None and not raton:
+            if mostrar_camara and frame is not None:
                 guia_camara(pantalla,frame,control,fuentes,cerrada,estado=="juego" and elegido in (2,3,4))
             if pos is not None and estado=='menu':
                 cursor_cartas(pantalla,pos,cerrada)
@@ -555,11 +518,10 @@ def main():
                     efectos.dibujar_picadura(pantalla,dibujo_pos,ahora,fuentes)
             if estado not in ('juego','menu'):
                 texto(pantalla,fuentes,'MANO DETECTADA' if pos else 'MOSTRÁ TU MANO',(80 if render_menu else 48,ALTO-34),18,LIMA if pos else CORAL)
-                texto(pantalla,fuentes,'F2 · '+('MODO RATÓN' if raton else 'CONTROL POR CÁMARA'),(950 if render_menu else 620,ALTO-34),18)
             if estado not in ('juego','menu'):
                 texto(pantalla,fuentes,'SIN AUDIO' if not sonido.activo else ('M · SILENCIADO' if sonido.silenciado else 'M · SONIDO'),(540 if render_menu else 340,ALTO-34),18,CORAL if sonido.silenciado or not sonido.activo else CREMA)
             sonido.actualizar(estado,estado=='juego' and (pausado or sin_mano),partida is not None and partida.puntos>=partida.meta)
-            if error and not raton:
+            if error:
                 pygame.draw.rect(pantalla,(100,40,45),(0,ALTO-58,ANCHO,26))
                 texto(pantalla,fuentes,error,(20,ALTO-54),22)
             if estado!='menu':
@@ -574,7 +536,7 @@ def main():
             if not render_menu:
                 lienzo.blit(contenido,(margen,0))
                 if estado=='juego':
-                    guia_gesto(lienzo,pos,cerrada,elegido,getattr(partida,'carga',None),control,raton)
+                    guia_gesto(lienzo,pos,cerrada,elegido,getattr(partida,'carga',None),control,False)
                     if elegido!=1:
                         mascota,angulo=companero.postura((1200,350))
                         dibujar_familiar(lienzo,mascota,True,companero.t,angulo)
@@ -590,10 +552,6 @@ def main():
         pygame.quit()
         if entrada is not None:
             entrada.cerrar()
-        if camara is not None:
-            camara.release()
-        if control is not None and entrada is None:
-            control.cerrar()
 
 
 if __name__ == '__main__':
