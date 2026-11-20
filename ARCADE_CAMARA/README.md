@@ -25,22 +25,50 @@ También podés abrir ABRIR_JUEGO.cmd después de instalar las dependencias. Mos
 - Los violetas con cuernos restan cuatro segundos cuando los mordés.
 - Cuando la cámara pierde la mano, la partida detiene su tiempo hasta detectarla.
 - P pausa, Esc vuelve al menú y Esc desde el menú cierra. La cruz también cierra.
-- F2 cambia explícitamente entre cámara y mouse para probar la mecánica.
-  En modo mouse, mantener el botón izquierdo equivale a mantener la pinza.
+- El mouse y el teclado permiten navegar. Para jugar cualquiera de las cuatro aventuras necesitás la cámara y una mano detectable.
 
 Para seleccionar otra cámara, ejecutá desde esta carpeta con el Python del curso
-`main.py --camera 1`. El argumento `--demo` permite probar sin abrir la cámara.
+`main.py --camera 1`.
+
+## Detección
+
+Jugá con luz frontal y un fondo simple. Ajustá la distancia hasta que se vea la mano completa, con espacio para moverla sin salir del cuadro. C abre la guía de cámara. Si la mano deja de detectarse, se pausa la partida hasta recuperarla.
+
+## Recursos y uso de IA
+
+Los sonidos se sintetizaron para el proyecto con los generadores incluidos. El detalle está en [procedencia del audio](assets/audio/PROCEDENCIA.md). Las ilustraciones generadas con ImageGen se documentan en [procedencia visual](assets/PROCEDENCIA.md) y en los archivos de prompts de la carpeta assets. No se incluyeron las capturas usadas como referencia visual.
+
+ChatGPT se utilizó para apoyar la ideación, el código, las revisiones, la documentación y la preparación de la entrega. ImageGen se utilizó para crear las ilustraciones del juego. Los prompts visuales originales se conservan en assets. Las referencias APA están en el informe.
 
 ## Organización
 
-- main.py administra pantallas, eventos y dibujo con Pygame.
-- mano.py usa los puntos 4 y 8 de MediaPipe para medir la pinza respecto del
-  tamaño de la palma. Dos umbrales evitan que abra y cierre constantemente.
-- juego.py conserva las reglas, el tiempo, los bichos, la captura y la entrega.
-
-El video se procesa localmente y se muestra suavemente de fondo durante la
-partida. Las imágenes de la cámara se mantienen en memoria durante la ejecución.
-Los bichos y el monstruo se dibujan con figuras de Pygame.
+| Archivo | Función |
+| --- | --- |
+| `ajustes.py` | Dimensiones, paleta y parámetros compartidos. |
+| `ambiente.py` | Fondos y animaciones del bosque. |
+| `arte_sellos.py` | Arte y cursor de Sellos de luna. |
+| `banquete.py` | Reglas y dibujo de Banquete del familiar. |
+| `bolsa.py` | Dibujo de la bolsa del primer juego. |
+| `cartas.py` | Carrusel de selección y colección. |
+| `companero.py` | Compañero animado y guía visual de gestos. |
+| `crear_audio.py` | Generador local de música y efectos base. |
+| `crear_audio_magico.py` | Generador local de variaciones sonoras. |
+| `diario.py` | Recuerdos y persistencia local del progreso. |
+| `efectos.py` | Animaciones que acompañan eventos de la partida. |
+| `faroles.py` | Secuencias, reglas y dibujo de Faroles del jardín. |
+| `gestos.py` | Ilustración del gesto de pinza. |
+| `identidad.py` | Nombre, fuentes y recursos visuales. |
+| `interfaz.py` | Paneles, botones y tratamiento tipográfico. |
+| `juego.py` | Reglas de Bichos a la boca. |
+| `main.py` | Eventos, actualización, reloj, pantallas y dibujo en Pygame. |
+| `navegacion.py` | Control de regreso al menú. |
+| `objetos_anime.py` | Sprites de objetos. |
+| `particulas.py` | Emisión y actualización de partículas. |
+| `personajes.py` | Dibujo de criaturas. |
+| `sellos.py` | Reglas y seguimiento del trazo en Sellos de luna. |
+| `sonido.py` | Reproducción y mezcla de música y efectos WAV. |
+| `tutorial_animado.py` | Demostraciones visuales de los controles. |
+| `vision.py` | Apertura, captura espejada y detección de mano con OpenCV y MediaPipe. |
 
 ## Estado
 
