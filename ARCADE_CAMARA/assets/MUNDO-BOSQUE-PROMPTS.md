@@ -1,0 +1,20 @@
+# Arte del mundo de la casita
+
+Generado con la herramienta integrada imagegen. Las ilustraciones anteriores se conservan.
+
+- `mundos-bosque-v3.png`: atlas 2 × 2, jardín, patio, cocina y claro de luna; main.py recorta cada cuadrante en memoria.
+- `objetos-bosque-v2.png`: atlas transparente 3 × 2, farol, dulce, poción, bomba, estrella y canasta.
+- `sellos-bosque-v2.png`: atlas transparente 2 × 2, corona de ramas, espíritu, pluma y joya.
+
+## Prompt de escenarios
+
+Create ONE production game background atlas, exactly a 2 by 2 grid of four equally sized wide 16:9 landscapes, total image also 16:9. No gutters, borders, text, UI, lettering or characters. Hand painted Japanese animation watercolor/gouache environment art, warm cozy woodland cottage world, sage and moss greens, cream, honey light, tactile foliage and natural wood, gentle whimsical magical everyday life. Each panel MUST have a quiet spacious low-detail central 70% for moving game objects, all detailed props at far edges. Top left: sunlit meadow garden clearing with tiny wildflowers at edges, cottage glimpse at far left. Top right: dusk woodland courtyard with hanging warm paper lanterns on outer branches, quiet grassy central space, warm teal and amber. Bottom left: cozy rustic cottage bakery kitchen, herb bundles and jars at far left/right, softly lit plain sage plaster central wall, wood floor below. Bottom right: moonlit forest clearing framed by soft ferns at extreme edges, luminous blue-green grass and cream moonlight, calm spacious center. Absolutely no ornate gold filigree, gothic decoration, roses, neon pink or purple-heavy palette. The four rectangular environments must fill precisely their own quadrants for direct slicing in Pygame. Deliver high resolution.
+
+## Prompt de objetos
+
+One production sprite sheet for a cozy watercolor Japanese-animation woodland cottage game. Exactly SIX separate objects in a precise THREE COLUMN by TWO ROW equally spaced grid, each centered in its own cell with generous transparent margins. TRUE transparent background, no scenery, no text, no labels, no shadows outside objects. Row1 left: warm glowing cream paper lantern with simple bamboo frame and a little sage leaf tassel; row1 middle: round honey candy wrapped in cream and soft coral paper; row1 right: small violet glass poison bottle with cork and clearly readable skull symbol. Row2 left: round charcoal cartoon bomb with short spark wick and tiny expressive face; row2 middle: golden magical five-point star with tiny friendly face; row2 right: woven natural wicker collecting basket, wide open top, cream cloth and small sage ribbon. Crisp readable silhouettes at 60px, tasteful soft hand-painted watercolor/gouache details, sage green cream warm honey palette; dangerous poison stays violet. Charming natural handmade material aesthetic, no gothic metal filigree, ornate jewels, pink roses. Every object completely inside its own equal cell, absolutely no overlapping adjacent cells.
+
+## Prompt de sellos
+
+Production sprite atlas with FOUR objects arranged in an EXACT two-column two-row equal grid, centered, each isolated with generous fully transparent margins. TRUE transparent background. Cozy hand painted watercolor Japanese animation woodland cottage magic, cream sage green soft gold and muted teal, natural warm handmade aesthetic. Top left: circular thin wreath ring made of twisting hazel twigs and small sage leaves, EMPTY transparent circular center, few little cream flowers, no roses or gold filigree. Top right: adorable small floating cream-colored cat spirit, round soft silhouette, tiny black eyes, sage leaf on head, subtle luminous outline. Bottom left: diagonal ivory feather quill with natural wood nib holder, sage thread, tip at lower left. Bottom right: small luminous honey-colored teardrop crystal wrapped in two sage leaves. All sprites separate never cross equal quadrant boundaries, no text, no scene, no backdrop, no ground shadows, no large surrounding glow. Distinct readable silhouettes for game interface. No pink gothic baroque ornament.
+

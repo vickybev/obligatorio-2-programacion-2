@@ -1,0 +1,10 @@
+# Objetos ilustrados anime v1
+
+Lámina original generada con image_gen integrado, guardada en
+objetos-anime-v1.png. Tres columnas y dos filas: farol, dulce, poción;
+bomba, estrella, canasta. objetos_anime.py lee sus celdas transparentes
+como sprites y conserva las versiones escaladas para dibujarlas.
+
+## Prompt
+
+Create a production ready game sprite atlas on a truly transparent background, landscape 3:2 canvas, exact regular grid of THREE columns and TWO rows, SIX separate original objects, one object centered in each equally sized cell, generous transparent gutters, no overlapping adjacent cells, no text no labels no grid lines. Cohesive hand inked richly cel shaded painterly gothic cozy anime fantasy style, plum rose pink, violet and antique gold, beautiful detailed but bold silhouettes readable small. Top row from left to right: (1) ornate hanging gothic enchanted lantern with dark plum filigree frame, pink rose adornment, a warm cream golden glass body, small crescent decoration and gold tassel; (2) delicious round pink wrapped candy, cream spiral, rose gold twist wrapper ends and tiny star highlights; (3) poisonous purple potion in elegant round glass bottle, ornate cork and tiny ivory skull label, violet liquid and magenta ribbon. Bottom row from left to right: (4) round dark purple magical smoke bomb with conspicuous burning pink-gold fuse, cute ivory skull motif, rose metal detailing, clearly dangerous and NOT a potion; (5) golden five point magical star charm with pink gemstone center and little ivory highlights, clear star silhouette; (6) wide open wicker collecting basket, front view slightly above to see open dark interior, rose fabric lining, large pink bow, golden crescent clasp, arched handle, ornate but clearly open mouth at upper third, NO sweets inside. Entire each object visible inside its own grid cell. All six belong to same original anime witch confectionery garden game. Transparent alpha background across canvas and gutters, no shadows stretching into gutters, no backdrop.
