@@ -380,3 +380,5 @@ En esta sesión la cámara funcional fue la 1.
 Pruebas: tmp/probar_entrada_camara.py, tmp/probar_alineacion_camara.py,
 navegación completa y persistencia del diario.
 
+
+[Repositorio del Obligatorio 2 en GitHub](https://github.com/vickybev/obligatorio-2-programacion-2).
