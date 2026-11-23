@@ -410,3 +410,12 @@ navegación completa y persistencia del diario.
 
 
 [Repositorio del Obligatorio 2 en GitHub](https://github.com/vickybev/obligatorio-2-programacion-2).
+
+## Cronología del desarrollo
+
+- **12 de noviembre.** La copia local `antes-diario-bosque` conserva una etapa anterior a la integración del diario. En esa etapa ya se trabajaba con las reglas de Bichos a la boca y los efectos sonoros.
+- **13 de noviembre.** La copia local `antes-identidad-interfaz` conserva el diseño anterior al cuaderno botánico. El criterio de tipografía, color y jerarquía de la interfaz quedó documentado en [DISENO-INTERFAZ.md](DISENO-INTERFAZ.md).
+- **16 de noviembre.** Se documentaron los ajustes para alinear el cursor con la cámara sin zoom y reducir el salto al cerrar la pinza. Las notas están en las dos revisiones anteriores de este README.
+- **20 de noviembre.** El prototipo entró al repositorio común. Luego se concentró la captura en `vision.py` y se quitó el modo de juego con mouse.
+
+Las primeras fechas corresponden a las copias locales y notas del proyecto. El historial de Git comienza con la incorporación al repositorio.
