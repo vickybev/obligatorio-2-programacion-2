@@ -38,7 +38,7 @@ Jugá con luz frontal y un fondo simple. Ajustá la distancia hasta que se vea l
 
 Los sonidos se sintetizaron para el proyecto con los generadores incluidos. El detalle está en [procedencia del audio](assets/audio/PROCEDENCIA.md). Las ilustraciones generadas con ImageGen se documentan en [procedencia visual](assets/PROCEDENCIA.md) y en los archivos de prompts de la carpeta assets. No se incluyeron las capturas usadas como referencia visual.
 
-ChatGPT se utilizó para apoyar la ideación, el código, las revisiones, la documentación y la preparación de la entrega. ImageGen se utilizó para crear las ilustraciones del juego. Los prompts visuales originales se conservan en assets. Las referencias APA están en el informe.
+ChatGPT se utilizó para apoyar la ideación, el código, las revisiones, la documentación y la preparación de la entrega. ImageGen se utilizó para crear las ilustraciones del juego. La [declaración de uso de IA](USO-IA.md) detalla las herramientas, las consignas de revisión, los prompts visuales y las referencias.
 
 ## Organización
 
