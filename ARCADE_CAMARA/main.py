@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pygame
 
-from juego import NIDO, Partida
+from juego import NIDO, REFUGIO_LUNA, Partida
 from vision import abrir_camara, redimensionar
 from ajustes import ALTO, ANCHO, FPS, FONDO, CREMA, LIMA, CORAL, VIOLETA, NIVELES_AVENTURAS
 from efectos import Efectos
@@ -26,8 +26,9 @@ from personajes import dibujar_bicho, dibujar_familiar
 from tutorial_animado import dibujar as animar_tutorial
 from navegacion import Regreso
 from interfaz import limpiar_cache
-from diario import Diario, REPETIR, VOLVER, DIARIO_MENU
+from diario import Diario, REPETIR, VOLVER, DIARIO_MENU, recuerdo
 from companero import Companero, guia as guia_gesto
+from gestos import mano_lateral
 
 
 
@@ -231,6 +232,7 @@ def main():
     partida = None
     elegido = 1
     nivel = 0
+    practica_lista = False
     particulas = Particulas()
     efectos = Efectos()
     pausado = False
@@ -297,6 +299,8 @@ def main():
                             nivel = min(diario.niveles(elegido), 2)
                             estado = 'instrucciones'
                         elif estado in ('instrucciones','resultado') and evento.key==pygame.K_RETURN:
+                            if estado == 'instrucciones' and elegido == 1 and nivel == 0 and not practica_lista:
+                                continue
                             if estado == 'resultado':
                                 nivel = diario.siguiente(elegido, nivel, partida)
                             partida = {1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
@@ -391,6 +395,10 @@ def main():
                         tam_reflejo=(ancho_vista,ALTO)
                     pantalla.blit(reflejo,(0,142),(0,142,ancho_vista,490))
                 diario.insignias(pantalla,coleccion.rects)
+                # Los primeros recuerdos aparecen junto a la carta como habitantes de la casita.
+                for i, centro in enumerate(((188, 552), (1084, 552), (290, 573), (987, 575))):
+                    if diario.niveles(i + 1) > 0:
+                        recuerdo(pantalla, centro, i, 68, True, ahora)
                 diario.boton_menu(pantalla,puntero)
                 if click or (mordida and puntero is not None and DIARIO_MENU.collidepoint(puntero)) or (coleccion.listo):
                     if puntero and DIARIO_MENU.collidepoint(puntero):
@@ -401,6 +409,11 @@ def main():
                             elegido=seleccion
                             nivel = min(diario.niveles(elegido), 2)
                             estado='instrucciones'
+                if not palma and diario.sellos == 0:
+                    fase = min(1, (ahora % 3) / 1.5)
+                    mano_lateral(pantalla, (250 - 95 * fase, 634), 0, 55)
+                    pygame.draw.line(pantalla, PAPEL, (259, 626), (154, 626), 2)
+                    pygame.draw.polygon(pantalla, PAPEL, [(146,626),(156,621),(156,631)])
                 escribir(pantalla,'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir',(640,691),21,PAPEL)
 
             elif estado == 'diario':
@@ -453,13 +466,36 @@ def main():
                 segundos, meta = NIVELES_AVENTURAS[elegido - 1][nivel]
                 unidad = ('bichitos', 'constelaciones', 'puntos', 'sellos')[elegido - 1]
                 escribir(pantalla, f'{meta} {unidad} en {int(segundos)} s', (480, 505), 22, negrita=True)
-                boton(pantalla,jugar,'Comenzar la aventura',puntero is not None and jugar.collidepoint(puntero))
-                if activar and puntero is not None and jugar.collidepoint(puntero):
-                    partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
-                    efectos = Efectos()
-                    particulas = Particulas()
-                    estado,pausado='juego',False
-                escribir(pantalla,'Completá el nivel para abrir el siguiente · Enter para empezar',(480,619),20)
+                requiere_practica = elegido == 1 and nivel == 0 and not practica_lista
+                if requiere_practica:
+                    blanco = pygame.Rect(420, 266, 120, 100)
+                    pygame.draw.rect(pantalla, MUSGO, blanco, 2, border_radius=14)
+                    if mordida and puntero is not None and blanco.collidepoint(puntero):
+                        practica_lista = True
+                        requiere_practica = False
+                if requiere_practica:
+                    panel_papel(pantalla, jugar)
+                    escribir(pantalla, 'Practicá una pinza arriba', jugar.center, 26, negrita=True)
+                else:
+                    boton(pantalla,jugar,'Comenzar la aventura',puntero is not None and jugar.collidepoint(puntero))
+                    if activar and puntero is not None and jugar.collidepoint(puntero):
+                        partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
+                        efectos = Efectos()
+                        particulas = Particulas()
+                        estado,pausado='juego',False
+                avisos_bichos = ('Hacé pinza en el recuadro · El reloj todavía está quieto',
+                                 'Acercate despacio para que el bicho no escape',
+                                 'Los bichos con luna van a la izquierda y los de sol a la derecha')
+                aviso = 'Completá el nivel para abrir el siguiente · Enter para empezar'
+                if elegido == 1 and (requiere_practica or nivel):
+                    aviso = avisos_bichos[nivel]
+                elif elegido == 2 and nivel:
+                    aviso = ('Seguí el contorno del jardín' if nivel == 1
+                             else 'Los faroles se ocultan: repetí el orden sobre sus huellas')
+                elif elegido == 3 and nivel:
+                    aviso = ('Juntá el dulce que pide el familiar para sumar un bonus' if nivel == 1
+                             else 'Recogé los ingredientes en el orden del pedido')
+                escribir(pantalla, aviso, (480,619),20,ancho=800)
 
             elif estado == 'juego' and elegido in (2,3,4):
                 if not pausado and not preparando:
@@ -497,11 +533,23 @@ def main():
                 pygame.draw.rect(pantalla,(117,142,86),(78,130,804,478),1,border_radius=30)
                 efectos.bolsa(pantalla,partida.carga is not None,ahora,bicho)
                 panel_papel(pantalla,(NIDO[0]-105,NIDO[1]-108,210,33))
-                escribir(pantalla,'Soltá acá' if partida.carga else f'{partida.puntos} / {partida.meta} bichitos',(NIDO[0],NIDO[1]-91),18,negrita=True)
+                escribir(pantalla,'Soltá acá' if partida.carga and partida.refugio() == NIDO else f'{partida.puntos} / {partida.meta} bichitos',(NIDO[0],NIDO[1]-91),18,negrita=True)
                 panel_papel(pantalla,(NIDO[0]-109,NIDO[1]+130,218,30))
-                escribir(pantalla,'Bolsita del bosque',(NIDO[0],NIDO[1]+145),18,negrita=True)
+                escribir(pantalla,'Bolsa Sol' if partida.nivel == 2 else 'Bolsita del bosque',(NIDO[0],NIDO[1]+145),18,negrita=True)
+                if partida.nivel == 2:
+                    pygame.draw.ellipse(pantalla, (217, 201, 245),
+                                        (REFUGIO_LUNA[0]-85, REFUGIO_LUNA[1]-56, 170, 112), 4)
+                    panel_papel(pantalla, (REFUGIO_LUNA[0]-74, REFUGIO_LUNA[1]-78, 148, 33))
+                    escribir(pantalla, 'Luna · Soltá acá' if partida.carga and partida.carga.get('luna') else 'Bolsa Luna',
+                             (REFUGIO_LUNA[0], REFUGIO_LUNA[1]-61), 18, negrita=True)
                 for b in partida.bichos:
                     bicho(pantalla,(b['x'],b['y']),b['malo'],b['fase'])
+                    if b.get('asustado'):
+                        escribir(pantalla,'!', (b['x'],b['y']-33),24,CREMA,negrita=True)
+                    elif partida.nivel == 2 and not b['malo']:
+                        pygame.draw.circle(pantalla, (111,87,141) if b.get('luna') else (166,107,39),
+                                           (round(b['x']),round(b['y']-30)),11)
+                        escribir(pantalla,'L' if b.get('luna') else 'S',(b['x'],b['y']-30),14,CREMA,negrita=True)
                 mensaje = partida.mensaje if partida.aviso>0 else ('Mantené la pinza y soltá en la bolsita' if partida.carga else 'Acercate a un bichito y cerrá la pinza')
                 panel_pie(pantalla,mensaje,compacto=True)
                 if pausado or sin_mano:

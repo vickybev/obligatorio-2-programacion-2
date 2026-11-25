@@ -18,6 +18,7 @@ class Faroles:
     def __init__(self, nivel=0):
         """Prepara los faroles y la primera secuencia."""
         self.tiempo, self.meta = NIVELES_FAROLES[nivel]
+        self.nivel = nivel
         self.ritmo = (.85, .72, .60)[nivel]
         self.puntos = 0
         self.fin = False
@@ -32,7 +33,13 @@ class Faroles:
 
     def nueva_secuencia(self):
         """Elige el orden de faroles para la ronda actual."""
-        self.secuencia = random.sample(range(6), min(6, 3+self.puntos))
+        cantidad = min(6, 3 + self.puntos)
+        if self.nivel == 1:
+            contorno = (0, 1, 2, 5, 4, 3)
+            inicio = self.puntos % len(contorno)
+            self.secuencia = list((contorno + contorno)[inicio:inicio + cantidad])
+        else:
+            self.secuencia = random.sample(range(6), cantidad)
         self.paso = 0
         self.fase = 'mirar'
         self.reloj = 0.0
@@ -111,6 +118,8 @@ class Faroles:
                  'CONSTELACIONES',self.puntos,self.meta,self.tiempo)
         titulo='Mirá el orden' if self.fase=='mirar' else ('¡Constelación completa!' if self.fase=='celebrar' else 'Tu turno: repetí la secuencia')
         detalle='Cada farol encendido es una pista.' if self.fase=='mirar' else 'Cerrá y abrí la pinza sobre cada farol.'
+        if self.nivel == 2 and self.fase == 'repetir':
+            detalle = 'Tocá las huellas en el orden que viste'
         if self.malo and self.destello>0:detalle='¡Ups! −4 segundos. Mirá la secuencia otra vez.'
         aviso(pantalla,titulo,detalle)
         # Solo se revela el camino que ya acertaste.
@@ -126,6 +135,9 @@ class Faroles:
                 for radio,alpha in ((70,15),(53,22),(38,40)):
                     pygame.draw.circle(halo,(*color,alpha),(75,75),radio)
                 pantalla.blit(halo,(x-75,y-75))
+            if self.nivel == 2 and self.fase == 'repetir' and not activo:
+                pygame.draw.circle(pantalla, (162, 145, 116), (x,y), 24, 2)
+                continue
             ilustracion=sprite('farol',94,110,not activo)
             if ilustracion is not None:
                 pantalla.blit(ilustracion,ilustracion.get_rect(center=(x,y)))

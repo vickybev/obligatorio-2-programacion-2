@@ -11,6 +11,8 @@ ROSA=(233,192,111)
 CREMA=(247,239,210)
 TINTA=(30,19,41)
 ALTURA_CANASTA=555
+DULCES = ("Miel", "Frutilla", "Menta")
+COLORES_DULCES = ((249,214,127),(248,165,176),(185,232,188))
 
 
 from ajustes import NIVELES_BANQUETE
@@ -41,6 +43,8 @@ class Banquete:
         self.mensaje='¡Prepará la canasta!'
         self.aviso=2.0
         self.recogidos=0
+        self.pedido = [0] if nivel == 1 else [0, 1, 2] if nivel == 2 else []
+        self.paso_pedido = 0
 
     @property
     def multiplicador(self):
@@ -67,12 +71,20 @@ class Banquete:
             self.combo+=1
             self.mejor_combo=max(self.mejor_combo,self.combo)
             valor=self.multiplicador
+            completo = False
+            if self.pedido and objeto.get('variante') == self.pedido[self.paso_pedido]:
+                self.paso_pedido += 1
+                completo = self.paso_pedido == len(self.pedido)
+                valor += 4 if self.nivel == 1 else 7 if completo else 0
+                if completo:
+                    self.paso_pedido = 0
+                    self.pedido = [(tipo + 1) % len(DULCES) for tipo in self.pedido]
             self.puntos+=valor
             if self.combo in (5,10):
                 self.eventos.append(("combo",(self.x,self.y),valor))
             self.recogidos+=1
             self.eventos.append(('captura',(self.x,self.y),0))
-            self.avisar(f'+{valor}  ¡Dulce adentro!')
+            self.avisar(f'+{valor}  ¡Pedido completo!' if completo else f'+{valor}  ¡Dulce adentro!')
             self.particulas.append(dict(x=objeto['x'],y=self.y,t=.8,texto=f'+{valor}',malo=False))
             if self.puntos>=self.meta:
                 self.fin=True
@@ -147,8 +159,16 @@ class Banquete:
         estado=f'COMBO {self.combo} · x{self.multiplicador}'
         if self.iman>0:estado+=f' · IMÁN {math.ceil(self.iman)} s'
         cabecera(pantalla,3,'Banquete del familiar',estado,'DULZURA',self.puntos,self.meta,self.tiempo)
+        if self.pedido:
+            pedido = ' → '.join(DULCES[i] for i in self.pedido[self.paso_pedido:])
+            papel(pantalla, (278, 124, 404, 46))
+            escribir(pantalla, f'Pedido: {pedido}', (480, 147), 21, negrita=True)
         for objeto in self.objetos:
             dibujar_objeto(pantalla,objeto,ahora)
+            if self.pedido and objeto['tipo'] == 'dulce':
+                x, y = round(objeto['x']), round(objeto['y'])
+                pygame.draw.circle(pantalla, COLORES_DULCES[objeto['variante']], (x,y-21), 12)
+                escribir(pantalla, DULCES[objeto['variante']][0], (x,y-21), 15, TINTA, negrita=True)
         x=self.x+(math.sin(ahora*60)*5 if self.golpe else 0)
         if self.iman>0:
             pygame.draw.arc(pantalla,(244,202,130),(x-150,self.y-135,300,180),0,math.pi,2)

@@ -434,3 +434,9 @@ Cada aventura empieza en nivel 1. Ganar abre el siguiente nivel y suma un premio
 | Sellos de luna | 4 figuras en 90 s | 5 en 105 s, con rombo | 6 en 120 s, con infinito y mayor precisión |
 
 En Sellos de luna, la pluma y el trazo siguen el punto medio del pulgar y el índice. Los tiempos de Faroles corresponden al turno de repetir la secuencia.
+
+### Qué cambia al avanzar
+
+La primera vuelta de Bichos incluye una práctica de pinza sin reloj en la guía. En el nivel 2 los bichos amarillos se asustan si la mano se acerca demasiado rápido. En el nivel 3, los marcados L se entregan a la Bolsa Luna y los marcados S a la Bolsa Sol. Faroles presenta recorridos por el contorno en el nivel 2 y deja solo las huellas durante el turno del nivel 3. Banquete introduce un pedido de dulce en el nivel 2 y una secuencia de ingredientes en el nivel 3.
+
+Los premios iniciales de cada aventura se ven en el menú al regresar. El diario registra los demás premios por nivel.
