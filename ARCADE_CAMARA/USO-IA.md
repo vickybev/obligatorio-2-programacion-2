@@ -29,3 +29,7 @@ La [procedencia de los recursos visuales](assets/PROCEDENCIA.md) y la [procedenc
 
 - ChatGPT. (2026). Prompts utilizados para apoyar el desarrollo y la documentación de La casita de los hechizos. [ChatGPT](https://chatgpt.com/)
 - ImageGen. (2026). Prompts utilizados para ilustrar La casita de los hechizos. [ChatGPT](https://chatgpt.com/)
+
+## Arte promocional
+
+ImageGen se usó para la ilustración del póster y su recorte en la carátula. La escena retoma la estética botánica del inicio del juego. El brief pidió una composición vertical con la cabaña entre vegetación, una mano en pinza y el recorrido luminoso de una luciérnaga. El lettering del juego se integró sobre el arte como una capa separada.
