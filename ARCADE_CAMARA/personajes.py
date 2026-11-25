@@ -4,6 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import pygame
+from armario import dibujar_prenda
 
 ASSETS = Path(__file__).parent / 'assets'
 
@@ -45,7 +46,7 @@ def dibujar_bicho(pantalla, pos, malo, tiempo, escala):
     return True
 
 
-def dibujar_familiar(pantalla, pos, cerrada, tiempo, angulo=0):
+def dibujar_familiar(pantalla, pos, cerrada, tiempo, angulo=0, prenda=None):
     imagen = variante('familiar',102,0)
     if imagen is None:
         return False
@@ -59,6 +60,8 @@ def dibujar_familiar(pantalla, pos, cerrada, tiempo, angulo=0):
         pygame.draw.ellipse(capa,(225,105,153),(x-7,y+19,14,7))
         for dx in (-6,6):
             pygame.draw.polygon(capa,(255,243,217),[(x+dx-3,y+10),(x+dx+3,y+10),(x+dx,y+15)])
+    if prenda is not None:
+        dibujar_prenda(capa, prenda)
     if angulo: capa=pygame.transform.rotate(capa,angulo)
     pantalla.blit(capa,capa.get_rect(center=tuple(map(round,pos))))
     return True

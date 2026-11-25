@@ -10,7 +10,8 @@ from interfaz import cabecera, pie, papel, escribir
 ROSA=(233,192,111)
 CREMA=(247,239,210)
 TINTA=(30,19,41)
-ALTURA_CANASTA=555
+ALTURA_CANASTA=515
+MIN_CANASTA, MAX_CANASTA = 200, 760
 DULCES = ("Miel", "Frutilla", "Menta")
 COLORES_DULCES = ((249,214,127),(248,165,176),(185,232,188))
 
@@ -31,8 +32,8 @@ class Banquete:
         self.objetos=[]
         self.particulas=[]
         self.x=480
-        self.y=440
-        self.y_anterior=440
+        self.y=ALTURA_CANASTA
+        self.y_anterior=ALTURA_CANASTA
         self.combo=0
         self.mejor_combo=0
         self.iman=0.0
@@ -55,7 +56,7 @@ class Banquete:
         """Incorpora un objeto que cae desde arriba de la pantalla."""
         if tipo is None:
             tipo=random.choices(['dulce','pocion','bomba'],((76,16,8), (72,17,11), (68,18,14))[self.nivel])[0]
-        self.objetos.append(dict(tipo=tipo,x=random.uniform(125,835),y=120.,
+        self.objetos.append(dict(tipo=tipo,x=random.uniform(MIN_CANASTA,MAX_CANASTA),y=120.,
                                  velocidad=random.uniform(130,175)+self.nivel*24+(self.tiempo_inicial-self.tiempo)*.9,
                                  fase=random.random()*math.tau,variante=random.randrange(3)))
 
@@ -89,7 +90,7 @@ class Banquete:
             if self.puntos>=self.meta:
                 self.fin=True
         elif tipo=='estrella':
-            self.iman=6.0
+            self.iman=8.0 if self.nivel else 6.0
             self.eventos.append(('magia',(self.x,self.y),0))
             self.avisar('¡IMÁN! Los dulces cercanos vienen hacia vos')
         else:
@@ -107,9 +108,9 @@ class Banquete:
         """Mueve los objetos y comprueba el cruce de la canasta entre cuadros."""
         if self.fin or pos is None:
             return
-        self.x=max(100,min(860,pos[0]))
+        self.x=max(MIN_CANASTA,min(MAX_CANASTA,pos[0]))
         self.y_anterior=self.y
-        self.y=max(190,min(550,pos[1]))
+        self.y=ALTURA_CANASTA
         if self.cuenta>0:
             self.cuenta=max(0,self.cuenta-dt)
             return
@@ -135,7 +136,7 @@ class Banquete:
         pendientes=[]
         for objeto in self.objetos:
             anterior=objeto['y']
-            if self.iman>0 and objeto['tipo']=='dulce' and objeto['y']>220 and abs(objeto['x']-self.x)<195:
+            if self.iman>0 and objeto['tipo']=='dulce' and objeto['y']>220 and abs(objeto['x']-self.x)<(245 if self.nivel else 195):
                 objeto['x']+=(self.x-objeto['x'])*min(1,dt*4)
             objeto['y']+=objeto['velocidad']*dt
             if ((anterior-self.y_anterior)*(objeto['y']-self.y)<=0 or abs(objeto['y']-self.y)<24) and abs(objeto['x']-self.x)<=65:
@@ -187,7 +188,7 @@ class Banquete:
             escribir(pantalla,str(math.ceil(self.cuenta)),(480,280),65,negrita=True)
             escribir(pantalla,'Prepará la canasta',(480,349),24,titulo=True)
         mensaje=self.mensaje if self.aviso>0 else 'Dulces sí. Pociones y bombas no. ¡Buscá la estrella!'
-        pie(pantalla,mensaje,'Mové la mano arriba, abajo y a los lados. Sin hacer pinza.')
+        pie(pantalla,mensaje,'Mové la palma de lado a lado para guiar la canasta.')
 
 
 

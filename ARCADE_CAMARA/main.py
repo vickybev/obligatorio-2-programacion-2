@@ -29,6 +29,8 @@ from interfaz import limpiar_cache
 from diario import Diario, REPETIR, VOLVER, DIARIO_MENU, recuerdo
 from companero import Companero, guia as guia_gesto
 from gestos import mano_lateral
+from perfiles import SelectorJugadores
+from casa_mascota import CasaMascota
 
 
 
@@ -73,9 +75,9 @@ def bicho(pantalla, pos, malo, fase, escala=1):
     pygame.draw.arc(pantalla,FONDO,(x-6,y+1,12,9),0,math.pi,2)
 
 
-def monstruo(pantalla, pos, cerrada, segundos, carga=None, angulo=0):
+def monstruo(pantalla, pos, cerrada, segundos, carga=None, angulo=0, prenda=None):
     """Dibuja la criatura que acompaña al cursor durante la captura."""
-    if dibujar_familiar(pantalla,pos,cerrada,segundos,angulo):
+    if dibujar_familiar(pantalla,pos,cerrada,segundos,angulo,prenda):
         if carga:
             x,y = pos
             bicho(pantalla,(x+31,y+26),False,segundos*5,.55)
@@ -228,12 +230,24 @@ def main():
     ancho_control_anterior=ANCHO
     entrada = None
     frame = None
-    estado = 'menu'
+    estado = 'perfiles'
     partida = None
-    fondos_bichos = [mundos[0]]
+    fondos_niveles = [[mundo] for mundo in mundos]
+    carpeta_arte = Path(__file__).parent / 'assets'
     for archivo in ('claro-luciernagas.png', 'jardin-lunar.png'):
-        ruta = Path(__file__).parent / 'assets' / archivo
-        fondos_bichos.append(Ambiente(pygame.image.load(str(ruta)).convert()))
+        fondos_niveles[0].append(Ambiente(pygame.image.load(str(carpeta_arte / archivo)).convert()))
+    for indice, archivo in enumerate(('niveles-faroles.png', 'niveles-banquete.png', 'niveles-sellos.png'), 1):
+        tira = pygame.image.load(str(carpeta_arte / archivo)).convert()
+        w, h = tira.get_size()
+        for inicio, fin in ((0, h//2), (h//2, h)):
+            escena = tira.subsurface((0, inicio, w, fin-inicio))
+            fondos_niveles[indice].append(Ambiente(pygame.transform.smoothscale(escena, (1280, 680))))
+    nombres_nivel = (NOMBRES_BICHOS, ('Jardín de faroles', 'Patio de los reflejos', 'Sauce del crepúsculo'),
+                     ('Cocina de la casita', 'Confitería de frutilla', 'Despensa de miel'),
+                     ('Círculo de luna', 'Santuario de amatista', 'Observatorio de estrellas'))
+    ayudas_nivel = (AYUDAS_BICHOS, ('Mirá y repetí el orden', 'Seguí el contorno del jardín', 'Recordá los faroles ocultos'),
+                     ('Mové la canasta a los lados', 'Buscá el dulce del pedido', 'Completá la receta en orden'),
+                     ('Trazá con pulgar e índice', 'Seguí la guía del rombo', 'Seguí cada rama del infinito'))
     elegido = 1
     nivel = 0
     practica_lista = False
@@ -252,6 +266,9 @@ def main():
     bosque=Ambiente(pygame.transform.smoothscale(pygame.image.load(str(bosque_ruta)).convert(),(ANCHO,ALTO))) if bosque_ruta.exists() else ambiente
     coleccion = Coleccion()
     diario = Diario()
+    jugadores = SelectorJugadores(diario.ruta)
+    perfil_activo = None
+    casa_mascota = CasaMascota(diario.ruta)
     companero = Companero()
     regreso = Regreso()
     jugar = pygame.Rect(305,522,350,62)
@@ -272,9 +289,30 @@ def main():
             for evento in pygame.event.get():
                 if evento.type in (pygame.QUIT,pygame.WINDOWCLOSE):
                     andando = False
+                elif estado == 'perfiles':
+                    if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
+                        pygame.key.stop_text_input()
+                        if perfil_activo is None:
+                            andando = False
+                        else:
+                            estado = 'menu'
+                    elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                        click = True
+                    else:
+                        elegido_perfil = jugadores.evento(evento)
+                        if elegido_perfil is not None:
+                            perfil_activo = elegido_perfil
+                            diario = Diario(perfil_activo.ruta_diario)
+                            casa_mascota = CasaMascota(diario.ruta)
+                            practica_lista = diario.niveles(1) > 0
+                            elegido = perfil_activo.ultimo_juego or 1
+                            nivel = min(diario.niveles(elegido), 2)
+                            estado = 'instrucciones' if perfil_activo.ultimo_juego else 'menu'
                 elif evento.type == pygame.KEYDOWN:
                     if evento.key == pygame.K_ESCAPE:
-                        if estado == 'menu':
+                        if estado == 'mascota' and casa_mascota.armario:
+                            casa_mascota.armario = False
+                        elif estado == 'menu':
                             andando = False
                         else:
                             estado = 'menu'
@@ -282,6 +320,10 @@ def main():
                         coleccion.mover(-1 if evento.key==pygame.K_LEFT else 1)
                     elif evento.key == pygame.K_r and estado=='juego' and elegido==4:
                         partida.reiniciar_trazo()
+                    elif evento.key == pygame.K_h and estado == 'menu':
+                        estado = 'mascota'
+                    elif evento.key == pygame.K_j and estado == 'menu':
+                        estado = 'perfiles'
                     elif evento.key == pygame.K_d and estado in ('menu','resultado','diario'):
                         estado='menu' if estado=='diario' else 'diario'
                     elif evento.key == pygame.K_m:
@@ -319,7 +361,7 @@ def main():
             if entrada is not None:
                 ancho_control=ancho_vista if estado=='menu' else ANCHO
                 referencia = 'indice'
-                if estado == 'menu' or (elegido == 1 and estado in ('instrucciones', 'juego')) or (estado == 'juego' and elegido == 3):
+                if estado in ('menu', 'perfiles') or (elegido == 1 and estado == 'instrucciones') or (estado == 'juego' and elegido in (1, 2, 3)):
                     referencia = 'palma'
                 elif estado == 'juego' and elegido == 4:
                     referencia = 'pinza'
@@ -340,6 +382,12 @@ def main():
                 companero.partida=partida
                 cuenta_inicio=3.0
                 if elegido==3: partida.cuenta=0
+                if perfil_activo is not None and perfil_activo.ultimo_juego != elegido:
+                    perfil_activo.ultimo_juego = elegido
+                    try:
+                        perfil_activo.guardar()
+                    except OSError:
+                        pass  # El diario de niveles se sigue guardando por separado.
             if estado=='juego' and not pausado and not sin_mano:
                 particulas.actualizar(dt)
             preparando=estado=='juego' and cuenta_inicio>0
@@ -351,9 +399,9 @@ def main():
             if mordida and control is not None:
                 puntero=getattr(control,'pos_evento',None) or pos
 
-            fondo_activo = bosque if estado in ('menu','diario','resultado') else mundos[elegido-1]
-            if elegido == 1 and estado in ('instrucciones', 'juego'):
-                fondo_activo = fondos_bichos[nivel]
+            fondo_activo = bosque if estado in ('menu','diario','resultado','perfiles','mascota') else mundos[elegido-1]
+            if estado in ('instrucciones', 'juego'):
+                fondo_activo = fondos_niveles[elegido - 1][nivel]
             fondo_activo.actualizar(0 if estado=="juego" and (pausado or sin_mano) else dt)
             render_menu=estado=='menu'
             fondo_activo.dibujar(lienzo)
@@ -378,7 +426,17 @@ def main():
                 pantalla.blit(reflejo,(78,130),(78,130,804,478))
             if estado == 'instrucciones':
                 panel_papel(pantalla,(42,40,876,604))
-            if estado == 'menu':
+            if estado == 'perfiles':
+                elegido_perfil = jugadores.dibujar(pantalla, puntero, activar)
+                if elegido_perfil is not None:
+                    perfil_activo = elegido_perfil
+                    diario = Diario(perfil_activo.ruta_diario)
+                    casa_mascota = CasaMascota(diario.ruta)
+                    practica_lista = diario.niveles(1) > 0
+                    elegido = perfil_activo.ultimo_juego or 1
+                    nivel = min(diario.niveles(elegido), 2)
+                    estado = 'instrucciones' if perfil_activo.ultimo_juego else 'menu'
+            elif estado == 'menu':
                 velo=pygame.Surface((ancho_vista,ALTO),pygame.SRCALPHA)
                 velo.fill((241,231,201,24))
                 pantalla.blit(velo,(0,0))
@@ -406,6 +464,17 @@ def main():
                     if diario.niveles(i + 1) > 0:
                         recuerdo(pantalla, centro, i, 68, True, ahora)
                 diario.boton_menu(pantalla,puntero)
+                casa = pygame.Rect(1050,157,205,58)
+                boton(pantalla, casa, 'Su casita · H', puntero is not None and casa.collidepoint(puntero))
+                dibujar_familiar(pantalla, (1152, 265), False, ahora, prenda=casa_mascota.prenda)
+                if activar and puntero is not None and casa.collidepoint(puntero):
+                    estado = 'mascota'
+                cambiar = pygame.Rect(25,67,205,68)
+                boton(pantalla, cambiar, 'Cambiar jugador · J', puntero is not None and cambiar.collidepoint(puntero))
+                if perfil_activo is not None:
+                    escribir(pantalla, perfil_activo.nombre, (128,150), 19, PAPEL, ancho=200)
+                if activar and puntero is not None and cambiar.collidepoint(puntero):
+                    estado = 'perfiles'
                 if click or (mordida and puntero is not None and DIARIO_MENU.collidepoint(puntero)) or (coleccion.listo):
                     if puntero and DIARIO_MENU.collidepoint(puntero):
                         estado='diario'
@@ -421,6 +490,9 @@ def main():
                     pygame.draw.line(pantalla, PAPEL, (259, 626), (154, 626), 2)
                     pygame.draw.polygon(pantalla, PAPEL, [(146,626),(156,621),(156,631)])
                 escribir(pantalla,'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir',(640,691),21,PAPEL)
+
+            elif estado == 'mascota':
+                casa_mascota.dibujar(pantalla, puntero, activar, ahora, diario)
 
             elif estado == 'diario':
                 regresar=diario.album(pantalla,coleccion,pos,dt)
@@ -597,12 +669,11 @@ def main():
                 particulas.dibujar(pantalla,fuentes)
             if estado=='juego' and preparando and not sin_mano and not pausado:
                 panel_papel(pantalla,(250,225,460,199))
-                titulo = NOMBRES_BICHOS[nivel] if elegido == 1 else '¡Prepará tu mano!'
+                titulo = nombres_nivel[elegido - 1][nivel]
                 escribir(pantalla,f'Nivel {nivel + 1} · {titulo}',(480,258),26,negrita=True,ancho=420)
                 escribir(pantalla,str(max(1,math.ceil(cuenta_inicio))),(480,322),70,negrita=True)
-                if elegido == 1:
-                    escribir(pantalla,AYUDAS_BICHOS[nivel],(480,391),21,ancho=420)
-            if estado!='menu':
+                escribir(pantalla,ayudas_nivel[elegido - 1][nivel],(480,391),21,ancho=420)
+            if estado not in ('menu','perfiles'):
                 regreso.dibujar(pantalla)
             if mostrar_camara and frame is not None:
                 guia_camara(pantalla,frame,control,fuentes,cerrada,estado=="juego" and elegido in (2,3,4))
@@ -623,7 +694,7 @@ def main():
                     cercano=min(partida.bichos,key=lambda b:math.dist(pos,(b['x'],b['y'])))
                     objetivo=(cercano['x'],cercano['y'])
                 dibujo_pos,angulo=companero.postura(dibujo_pos,objetivo)
-                monstruo(pantalla,dibujo_pos,cerrada,ahora,partida.carga if estado=='juego' else None,angulo)
+                monstruo(pantalla,dibujo_pos,cerrada,ahora,partida.carga if estado=='juego' else None,angulo,casa_mascota.prenda)
                 companero.dibujar(pantalla,dibujo_pos)
                 if estado=='juego':
                     efectos.dibujar_picadura(pantalla,dibujo_pos,ahora,fuentes)
@@ -635,7 +706,7 @@ def main():
             if error:
                 pygame.draw.rect(pantalla,(100,40,45),(0,ALTO-58,ANCHO,26))
                 texto(pantalla,fuentes,error,(20,ALTO-54),22)
-            if estado!='menu':
+            if estado not in ('menu','perfiles'):
                 if regreso.actualizar(dt,estado,puntero,cerrada,click or mordida):
                     estado='menu'
                     pausado=False
@@ -650,7 +721,7 @@ def main():
                     guia_gesto(lienzo,pos,cerrada,elegido,getattr(partida,'carga',None),control,False)
                     if elegido!=1:
                         mascota,angulo=companero.postura((1200,350))
-                        dibujar_familiar(lienzo,mascota,True,companero.t,angulo)
+                        dibujar_familiar(lienzo,mascota,True,companero.t,angulo,casa_mascota.prenda)
                         companero.dibujar(lienzo,mascota)
                         panel_papel(lienzo,(1130,413,140,34))
                         escribir(lienzo,'Tu compañero',(1200,430),16,negrita=True)

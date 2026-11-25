@@ -11,3 +11,7 @@ Use case: stylized-concept. Create an original hand painted anime fantasy game b
 ## Claro de luciérnagas y Jardín lunar
 
 Fondos originales generados con ImageGen para los niveles 2 y 3 de Bichos a la boca. Brief: claro de bosque otoñal con luz dorada y jardín de abedules azul nocturno con luna y faroles. Ambos se compusieron en 16:9, con vegetación en los bordes y el centro despejado para la mano y los bichos.
+
+## Escenarios avanzados de Faroles, Banquete y Sellos
+
+Los archivos niveles-faroles.png, niveles-banquete.png y niveles-sellos.png son ilustraciones originales generadas con ImageGen. Cada lámina contiene dos escenarios, uno por nivel avanzado. Brief visual: patio turquesa y jardín violeta para Faroles, confitería rosa y despensa ámbar para Banquete, santuario de amatista y observatorio azul para Sellos. Los detalles se concentran en los bordes para dejar el centro disponible para jugar.

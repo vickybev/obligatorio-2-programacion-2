@@ -442,3 +442,19 @@ La primera vuelta de Bichos incluye una práctica de pinza sin reloj en la guía
 Los premios iniciales de cada aventura se ven en el menú al regresar. El diario registra los demás premios por nivel.
 
 Los dos niveles avanzados de Bichos tienen escenarios propios. El Claro de luciérnagas es un bosque dorado de tarde y el Jardín lunar es un claro nocturno azul. La cuenta presenta el lugar y el objetivo. La bolsa principal queda abajo al centro y la boca se mueve con el centro de la palma. En los niveles 2 y 3, capturar la luciérnaga activa siete segundos de mayor alcance.
+
+## Jugadores, compañero y armario
+
+Al abrir el juego, elegí **Nueva partida** y escribí un nombre, o seleccioná un perfil y presioná **Continuar**. Cada perfil guarda sus niveles, premios, cuidados y vestimenta en esta PC. Continuar vuelve a la última aventura en el siguiente nivel disponible. Una ronda interrumpida vuelve a empezar. Con **J** podés cambiar de jugador desde el menú. Si existe un diario de una versión anterior, aparece como **Partida anterior**.
+
+Entrá a **Su casita** con una pinza, clic o **H** desde el menú. Podés darle de comer, bañarlo, jugar y acariciarlo. Cada primera victoria de nivel añade una prenda al **Armario**. Elegí ahí qué se pone. La ropa se mantiene puesta en el menú, la casa y las partidas hasta que elijas otra o vuelvas al aspecto original. Ganar una prenda nueva la guarda y conserva la que está puesta.
+
+Las rutas, nombres y guardado de jugadores están en perfiles.py. casa_mascota.py administra los cuidados y el armario. armario.py define y dibuja las prendas.
+
+## Escenarios y ayudas de los demás juegos
+
+Faroles avanza del jardín al Patio de los reflejos y al Sauce del crepúsculo. En los niveles avanzados, hacé pinza sobre **Pista** para ver una vez cuál es el siguiente farol. La posición del cursor sigue la palma.
+
+Banquete pasa por la cocina, la Confitería de frutilla y la Despensa de miel. La canasta se mueve de lado a lado en la parte baja. En niveles avanzados, la estrella atrae dulces desde más lejos y dura ocho segundos.
+
+Sellos pasa del círculo inicial al Santuario de amatista y al Observatorio de estrellas. Capturá **Tinta** una vez en los niveles avanzados para ganar ocho segundos de mayor tolerancia de trazo. La pluma sigue el centro de la pinza para conservar precisión.

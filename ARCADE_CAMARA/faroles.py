@@ -3,9 +3,10 @@ import math
 import random
 import pygame
 from objetos_anime import sprite
-from interfaz import cabecera, aviso, pie
+from interfaz import cabecera, aviso, pie, escribir
 
-LUGARES = [(220,245),(470,220),(730,245),(235,465),(480,490),(725,465)]
+LUGARES = [(278,245),(470,220),(682,245),(286,465),(480,490),(676,465)]
+PISTA_FAROL = (480, 366)
 ROSA = (233,192,111)
 CREMA = (247,239,210)
 
@@ -29,6 +30,8 @@ class Faroles:
         self.destello = 0.0
         self.ultimo = None
         self.malo = False
+        self.pista_disponible = nivel > 0
+        self.revelado = 0.0
         self.nueva_secuencia()
 
     def nueva_secuencia(self):
@@ -61,6 +64,7 @@ class Faroles:
         if self.fin or pos is None:
             return
         self.destello = max(0,self.destello-dt)
+        self.revelado = max(0,self.revelado-dt)
         if self.fase == 'mirar':
             anterior = self.encendido()
             self.reloj += dt
@@ -83,6 +87,11 @@ class Faroles:
             self.fin = True
             return
         if not mordida:
+            return
+        if self.pista_disponible and math.dist(pos, PISTA_FAROL) < 33:
+            self.pista_disponible = False
+            self.revelado = 1.6
+            self.eventos.append(('captura', PISTA_FAROL, 0))
             return
         cerca = [i for i,p in enumerate(LUGARES) if math.dist(pos,p)<56]
         if not cerca:
@@ -127,6 +136,12 @@ class Faroles:
         if len(camino)>1:
             pygame.draw.lines(pantalla,ROSA,False,[LUGARES[i] for i in camino],3)
         encendido = self.encendido()
+        if self.revelado and self.fase == 'repetir':
+            encendido = self.secuencia[self.paso]
+        if self.pista_disponible and self.fase == 'repetir':
+            pygame.draw.circle(pantalla, (62, 53, 75), PISTA_FAROL, 33)
+            pygame.draw.circle(pantalla, ROSA, PISTA_FAROL, 33, 3)
+            escribir(pantalla, 'Pista', PISTA_FAROL, 19, CREMA, negrita=True)
         for i,(x,y) in enumerate(LUGARES):
             activo=i==encendido or (self.fase=='celebrar' and i in self.secuencia)
             color=(255,222,150) if activo else (128,101,157)

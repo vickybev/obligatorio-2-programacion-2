@@ -7,6 +7,7 @@ from interfaz import cabecera, aviso, pie, papel, escribir
 
 ROSA=(233,192,111)
 CREMA=(247,239,210)
+TINTA_MAGICA=(739,220)
 
 
 from ajustes import NIVELES_SELLOS
@@ -61,6 +62,8 @@ class Sellos:
         """Prepara el reloj, la primera figura y el estado del trazo."""
         self.tiempo, self.meta = NIVELES_SELLOS[nivel]
         self.tolerancia = (29, 26, 23)[nivel]
+        self.tinta_disponible = nivel > 0
+        self.luz = 0.0
         self.puntos=0
         self.fin=False
         self.eventos=[]
@@ -103,11 +106,19 @@ class Sellos:
         if self.tiempo<=0:
             self.fin=True
             return
+        self.luz = max(0, self.luz - dt)
+        if self.tinta_disponible and mordida and math.dist(pos,TINTA_MAGICA) < 32:
+            self.tinta_disponible = False
+            self.luz = 8.0
+            self.eventos.append(('captura', TINTA_MAGICA, 0))
+            self.dibujando = False
+            return
+        tolerancia = self.tolerancia + (12 if self.luz else 0)
         if not cerrada:
             self.dibujando=False
             return
         if not self.iniciado:
-            if math.dist(pos,self.guia[0])>=self.tolerancia:
+            if math.dist(pos,self.guia[0])>=tolerancia:
                 return
             self.iniciado=True
         if not self.dibujando:
@@ -118,7 +129,7 @@ class Sellos:
             self.eventos.append(("polvo",tuple(pos),0))
             self.trazo=self.trazo[-1800:]
         anterior=self.paso
-        while self.paso<len(self.guia) and math.dist(pos,self.guia[self.paso])<self.tolerancia:
+        while self.paso<len(self.guia) and math.dist(pos,self.guia[self.paso])<tolerancia:
             self.paso+=1
         if self.paso>anterior and self.paso//7!=anterior//7:
             self.eventos.append(('captura',tuple(pos),0))
@@ -195,8 +206,13 @@ class Sellos:
                 pygame.draw.circle(pantalla,(255,216,153),(int(480+math.cos(a)*r),int(380+math.sin(a)*r)),3)
         porcentaje=round(self.paso/len(self.guia)*100)
         papel(pantalla,(740,537,200,64))
-        escribir(pantalla,f'Sello {min(self.puntos+1,4)} · {porcentaje}%',(840,559),20,negrita=True)
+        escribir(pantalla,f'Sello {min(self.puntos+1,self.meta)} · {porcentaje}%',(840,559),20,negrita=True)
         pygame.draw.rect(pantalla,(69,46,83),(760,584,160,6),border_radius=3)
         if porcentaje:
             pygame.draw.rect(pantalla,ROSA,(760,584,round(160*porcentaje/100),6),border_radius=3)
-        pie(pantalla,'Tu magia comienza en la joya','Abrí la pinza para levantar la pluma y continuar después.',borrar=True)
+        if self.tinta_disponible:
+            pygame.draw.circle(pantalla, (54, 72, 66), TINTA_MAGICA, 30)
+            pygame.draw.circle(pantalla, ROSA, TINTA_MAGICA, 30, 3)
+            escribir(pantalla, 'Tinta', TINTA_MAGICA, 19, CREMA, negrita=True)
+        mensaje = f'Tinta mágica · {math.ceil(self.luz)} s de trazo más ancho' if self.luz else 'Tu magia comienza en la joya'
+        pie(pantalla,mensaje,'Abrí la pinza para levantar la pluma y continuar después.',borrar=True)

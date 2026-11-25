@@ -8,6 +8,7 @@ from interfaz import papel, escribir, MUSGO, TINTA, PAPEL, boton, separador
 from personajes import variante
 from objetos_anime import sprite
 from arte_sellos import sprite as sprite_magico
+from armario import PRENDAS
 
 NOMBRES=('Bichos a la boca','Faroles del jardín','Banquete del familiar','Sellos de luna')
 SELLOS=('Amiga del bosque','Guardiana de la luz','Dulzura de hogar','Tejedora de estrellas')
@@ -160,6 +161,8 @@ class Diario:
         escribir(s,'Tu resultado',(668,301),20)
         escribir(s,f'Mejor marca: {self.datos[str(juego)]["mejor"]}',(668,354),23,negrita=True)
         escribir(s,f'{self.niveles(juego)} de 3 premios de esta aventura',(668,400),20)
+        if getattr(partida,'_premio_nuevo',False):
+            escribir(s,f'{PRENDAS[juego-1][nivel]} · en el armario',(668,438),18,negrita=True,ancho=348)
         escribir(s,'¡El diario está completo!' if all(self.niveles(i) == 3 for i in range(1, 5)) else 'La casita guarda tus aventuras.',(480,476),22,titulo=True)
         siguiente = self.siguiente(juego, nivel, partida)
         accion = f'Nivel {siguiente + 1} · Enter' if siguiente != nivel else 'Otra ronda · Enter'
