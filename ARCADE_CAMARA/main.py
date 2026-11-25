@@ -32,6 +32,7 @@ from companero import Companero, guia as guia_gesto
 
 
 def texto(pantalla, fuentes, contenido, pos, tam=24, color=CREMA, centro=False):
+    """Dibuja un texto con la tipografía y alineación de la pantalla activa."""
     if tam>=34 and centro:
         escribir(pantalla,contenido,pos,tam,color,titulo=True,ancho=pantalla.get_width()-80)
         return
@@ -45,6 +46,7 @@ def texto(pantalla, fuentes, contenido, pos, tam=24, color=CREMA, centro=False):
 
 
 def bicho(pantalla, pos, malo, fase, escala=1):
+    """Dibuja un bicho con la variante visual que corresponde a su tipo."""
     if dibujar_bicho(pantalla,pos,malo,fase,escala):
         return
     x, y = int(pos[0]), int(pos[1])
@@ -71,6 +73,7 @@ def bicho(pantalla, pos, malo, fase, escala=1):
 
 
 def monstruo(pantalla, pos, cerrada, segundos, carga=None, angulo=0):
+    """Dibuja la criatura que acompaña al cursor durante la captura."""
     if dibujar_familiar(pantalla,pos,cerrada,segundos,angulo):
         if carga:
             x,y = pos
@@ -105,6 +108,7 @@ def monstruo(pantalla, pos, cerrada, segundos, carga=None, angulo=0):
 
 
 def panel(pantalla, rect, color=(43, 32, 62), borde=(120, 85, 125)):
+    """Compone el tablero que rodea la zona jugable."""
     pygame.draw.rect(pantalla,color,rect,border_radius=20)
     pygame.draw.rect(pantalla,borde,rect,2,border_radius=20)
 
@@ -172,6 +176,7 @@ def guia_camara(pantalla, frame, control, fuentes, cerrada, pequena=False):
 
 
 def main():
+    """Ejecuta el menú y las cuatro aventuras con la misma cámara y ventana."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--camera', type=int, default=0)
     args = parser.parse_args()
@@ -198,6 +203,7 @@ def main():
     completa = False
     escritorio = pygame.display.get_desktop_sizes()[0]
     def coordenadas_raton():
+        """Convierte la posición del mouse al espacio del lienzo, excluyendo las bandas."""
         w,h = ventana.get_size()
         escala = min(w/ancho_vista,h/ALTO)
         mx,my = pygame.mouse.get_pos()
