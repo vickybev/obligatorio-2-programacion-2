@@ -288,13 +288,17 @@ def main():
                     elif evento.key == pygame.K_p and estado == 'juego':
                         pausado = not pausado
                     elif estado == 'instrucciones' and evento.key in (pygame.K_1, pygame.K_2, pygame.K_3):
-                        nivel = evento.key - pygame.K_1
+                        opcion = evento.key - pygame.K_1
+                        if diario.disponible(elegido, opcion):
+                            nivel = opcion
                     elif evento.key in (pygame.K_RETURN,pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4):
                         if estado == 'menu':
                             elegido = coleccion.indice+1 if evento.key==pygame.K_RETURN else {pygame.K_2:2,pygame.K_3:3,pygame.K_4:4}.get(evento.key,1)
-                            nivel = 0
+                            nivel = min(diario.niveles(elegido), 2)
                             estado = 'instrucciones'
                         elif estado in ('instrucciones','resultado') and evento.key==pygame.K_RETURN:
+                            if estado == 'resultado':
+                                nivel = diario.siguiente(elegido, nivel, partida)
                             partida = {1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
                             efectos = Efectos()
                             particulas = Particulas()
@@ -395,7 +399,7 @@ def main():
                         seleccion=coleccion.seleccionar(puntero)
                         if seleccion is not None:
                             elegido=seleccion
-                            nivel = 0
+                            nivel = min(diario.niveles(elegido), 2)
                             estado='instrucciones'
                 escribir(pantalla,'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir',(640,691),21,PAPEL)
 
@@ -434,7 +438,8 @@ def main():
                         escribir(pantalla, frase, (xx + 130, 385 + 26 * fila), 20, ancho=232)
                 for i in range(3):
                     selector = pygame.Rect(210 + i * 184, 453, 172, 36)
-                    sobre = puntero is not None and selector.collidepoint(puntero)
+                    disponible = diario.disponible(elegido, i)
+                    sobre = disponible and puntero is not None and selector.collidepoint(puntero)
                     if activar and sobre:
                         nivel = i
                     elegido_nivel = nivel == i
@@ -442,8 +447,9 @@ def main():
                     pygame.draw.rect(pantalla, color, selector, border_radius=8)
                     if sobre:
                         pygame.draw.rect(pantalla, MUSGO, selector, 2, border_radius=8)
-                    escribir(pantalla, f'Nivel {i + 1}', selector.center, 20,
-                             PAPEL if elegido_nivel else TINTA, negrita=elegido_nivel)
+                    etiqueta = f'Nivel {i + 1}' if disponible else f'Nivel {i + 1} · Cerrado'
+                    escribir(pantalla, etiqueta, selector.center, 19,
+                             PAPEL if elegido_nivel else MUSGO, negrita=elegido_nivel)
                 segundos, meta = NIVELES_AVENTURAS[elegido - 1][nivel]
                 unidad = ('bichitos', 'constelaciones', 'puntos', 'sellos')[elegido - 1]
                 escribir(pantalla, f'{meta} {unidad} en {int(segundos)} s', (480, 505), 22, negrita=True)
@@ -453,7 +459,7 @@ def main():
                     efectos = Efectos()
                     particulas = Particulas()
                     estado,pausado='juego',False
-                escribir(pantalla,'Elegí con pinza o 1–3 · Enter para empezar',(480,619),20)
+                escribir(pantalla,'Completá el nivel para abrir el siguiente · Enter para empezar',(480,619),20)
 
             elif estado == 'juego' and elegido in (2,3,4):
                 if not pausado and not preparando:
@@ -470,7 +476,7 @@ def main():
                     texto(pantalla,fuentes,'PAUSA' if pausado else 'MOSTRÁ TU MANO',(480,310),56,CREMA,True)
                     texto(pantalla,fuentes,'P para continuar' if pausado else 'El juego y el tiempo están detenidos.',(480,366),28,LIMA,True)
                 if partida.fin:
-                    diario.registrar(elegido,partida)
+                    diario.registrar(elegido,partida,nivel)
                     estado='resultado'
 
             elif estado == 'juego':
@@ -507,12 +513,13 @@ def main():
                 if celebracion > 0:
                     texto(pantalla,fuentes,'+1 ¡ÑAM!',(NIDO[0],NIDO[1]-125-int((1.2-celebracion)*22)),34,LIMA,True)
                 if partida.fin and not efectos.caidas and efectos.golpe <= 0:
-                    diario.registrar(elegido,partida)
+                    diario.registrar(elegido,partida,nivel)
                     estado='resultado'
 
             elif estado == 'resultado':
-                diario.resultado(pantalla,elegido,partida,ahora)
+                diario.resultado(pantalla,elegido,partida,ahora,nivel)
                 if activar and puntero is not None and repetir.collidepoint(puntero):
+                    nivel = diario.siguiente(elegido, nivel, partida)
                     partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
                     efectos = Efectos()
                     particulas = Particulas()

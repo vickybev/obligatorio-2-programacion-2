@@ -424,7 +424,7 @@ Las primeras fechas corresponden a las copias locales y notas del proyecto. El h
 
 ## Niveles de las aventuras
 
-Desde las instrucciones elegí Nivel 1, 2 o 3 con una pinza sobre el botón, con el mouse o con las teclas 1–3. Enter comienza la partida. Al repetir se conserva el nivel.
+Cada aventura empieza en nivel 1. Ganar abre el siguiente nivel y suma un premio al diario. Continuá con Enter o con una pinza sobre el botón del resultado. Desde las instrucciones podés volver a un nivel desbloqueado con pinza, mouse o las teclas 1–3. El progreso queda guardado en esta PC.
 
 | Aventura | Nivel 1 | Nivel 2 | Nivel 3 |
 | --- | --- | --- | --- |

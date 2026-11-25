@@ -13,6 +13,12 @@ NOMBRES=('Bichos a la boca','Faroles del jardín','Banquete del familiar','Sello
 SELLOS=('Amiga del bosque','Guardiana de la luz','Dulzura de hogar','Tejedora de estrellas')
 RECUERDOS=('Mariposa de miel','Farol del crepúsculo','Dulce de la casita','Espíritu de luna')
 HISTORIAS=(('Guardaste un pedacito','de sol entre tus manos.'),('Una lucecita que recuerda','el camino de regreso.'),('Una receta secreta,','un poquito de felicidad.'),('Dibujaste un camino','y la luna lo siguió.'))
+RECOMPENSAS = (
+    (RECUERDOS[0], 'Semilla de ámbar', 'Corona de bellotas'),
+    (RECUERDOS[1], 'Chispa de rocío', 'Corona del crepúsculo'),
+    (RECUERDOS[2], 'Receta de miel', 'Cuchara dorada'),
+    (RECUERDOS[3], 'Pluma de plata', 'Corona lunar'),
+)
 REPETIR=pygame.Rect(111,532,350,58)
 VOLVER=pygame.Rect(499,532,350,58)
 DIARIO_MENU=pygame.Rect(1050,67,205,73)
@@ -35,6 +41,9 @@ class Diario:
                     if any(type(fila.get(c)) is not int or fila[c]<0 for c in self.datos[k]):
                         raise ValueError('Datos inválidos')
                     if fila['victorias']>fila['partidas']: raise ValueError('Victorias inválidas')
+                    completados = fila.get('niveles', 0)
+                    if type(completados) is not int or not 0 <= completados <= 3:
+                        raise ValueError('Progreso de niveles inválido')
                 self.datos=contenido['juegos']
             except (ValueError,KeyError,TypeError,OSError):
                 self.error='No se pudo leer el diario. Conservamos el archivo original.'
@@ -43,12 +52,26 @@ class Diario:
     def sellos(self):
         return sum(d['victorias']>0 for d in self.datos.values())
 
-    def registrar(self,juego,partida):
+    def niveles(self, juego):
+        """Devuelve la cantidad de niveles completados en orden."""
+        return self.datos[str(juego)].get('niveles', 0)
+
+    def disponible(self, juego, nivel):
+        """Permite repetir niveles superados y jugar el siguiente."""
+        return 0 <= nivel < 3 and nivel <= self.niveles(juego)
+
+    def registrar(self,juego,partida,nivel=0):
+        """Registra el resultado y otorga una recompensa por primera victoria."""
+        if not self.disponible(juego, nivel):
+            return
         if getattr(partida,'_diario_registrado',False): return
         partida._diario_registrado=True
         d=self.datos[str(juego)]
         gano=partida.puntos>=partida.meta
         partida._sello_nuevo=gano and d['victorias']==0
+        partida._premio_nuevo = gano and nivel == self.niveles(juego)
+        if partida._premio_nuevo:
+            d['niveles'] = nivel + 1
         d['partidas']+=1
         d['victorias']+=int(gano)
         d['mejor']=max(d['mejor'],int(partida.puntos))
@@ -77,7 +100,7 @@ class Diario:
     def album(self,s,coleccion,pos=None,dt=1/30):
         papel(s,(38,24,884,626))
         escribir(s,'El tesoro de mis aventuras',(480,64),40,titulo=True)
-        escribir(s,f'{self.sellos} / 4 recuerdos · Acercá la mano y descubrí su historia',(480,108),20,ancho=810)
+        escribir(s,f'{sum(self.niveles(i) for i in range(1,5))} / 12 premios · Acercá la mano para verlos',(480,108),20,ancho=810)
         tiempo=pygame.time.get_ticks()/1000
         for i in range(4):
             x=65+(i%2)*425; y=137+(i//2)*210
@@ -96,21 +119,31 @@ class Diario:
                 escribir(tarjeta,f'NO. 0{i+1}',(92,163),16,negrita=True)
                 escribir(tarjeta,RECUERDOS[i] if obtenido else 'Un secreto del bosque',(278,48),27,titulo=True,ancho=235)
                 escribir(tarjeta,SELLOS[i] if obtenido else 'Todavía está dormido',(278,91),18,negrita=True,ancho=235)
-                escribir(tarjeta,'En tu colección' if obtenido else 'Completá esta aventura',(278,130),18,ancho=235)
+                escribir(tarjeta,f'Premios: {self.niveles(i + 1)} / 3' if obtenido else 'Completá esta aventura',(278,130),18,ancho=235)
                 escribir(tarjeta,NOMBRES[i],(278,159),17,ancho=235)
             else:
                 escribir(tarjeta,RECUERDOS[i],(202,37),29,titulo=True,ancho=365)
-                for j,linea in enumerate(HISTORIAS[i]): escribir(tarjeta,linea,(202,82+j*27),21)
+                for j, nombre in enumerate(RECOMPENSAS[i]):
+                    ganado = j < self.niveles(i + 1)
+                    escribir(tarjeta, nombre if ganado else f'Nivel {j + 1} · pendiente',
+                             (202, 72 + j*25), 18, TINTA if ganado else MUSGO)
                 escribir(tarjeta,f'Mejor marca: {d["mejor"]} · {d["victorias"]} victorias',(202,151),18)
             ancho=max(3,round(405*abs(math.cos(giro*math.pi))))
             tarjeta=pygame.transform.smoothscale(tarjeta,(ancho,190))
             s.blit(tarjeta,(x+(405-ancho)//2,y))
-        escribir(s,self.error or ('¡La casita está llena de recuerdos!' if self.sellos==4 else 'Cada aventura completada despierta un tesoro nuevo.'),(480,583),23,titulo=True,ancho=820)
+        escribir(s,self.error or ('¡La casita está llena de recuerdos!' if all(self.niveles(i) == 3 for i in range(1, 5)) else 'Cada nivel completado despierta un tesoro nuevo.'),(480,583),23,titulo=True,ancho=820)
         boton(s,(330,607,300,38),'Volver a las aventuras · Esc')
         return pygame.Rect(330,607,300,38)
 
-    def resultado(self,s,juego,partida,tiempo):
-        self.registrar(juego,partida)
+    def siguiente(self, juego, nivel, partida):
+        """Avanza tras una victoria si queda un nivel por delante."""
+        if partida.puntos >= partida.meta and self.disponible(juego, nivel + 1):
+            return nivel + 1
+        return nivel
+
+    def resultado(self,s,juego,partida,tiempo,nivel=0):
+        """Presenta el resultado y el nombre del premio recién ganado."""
+        self.registrar(juego,partida,nivel)
         gano=partida.puntos>=partida.meta
         if not hasattr(partida,'_revelado_en'): partida._revelado_en=tiempo
         aparicion=min(1,max(0,(tiempo-partida._revelado_en)/.8))
@@ -118,17 +151,19 @@ class Diario:
         papel(s,(40,28,880,620))
         pygame.draw.line(s,(184,174,138),(480,145),(480,490),2)
         escribir(s,'Diario de pequeñas magias',(480,66),32,titulo=True)
-        escribir(s,NOMBRES[juego-1],(480,108),23,negrita=True)
+        escribir(s,f'{NOMBRES[juego-1]} · Nivel {nivel + 1}',(480,108),23,negrita=True)
         recuerdo(s,(263,260),juego-1,round(85+70*aparicion),gano,tiempo)
         escribir(s,SELLOS[juego-1] if gano else 'La magia se practica',(263,365),25,titulo=True,ancho=355)
-        escribir(s,RECUERDOS[juego-1] if gano else 'Cada intento te enseña algo.',(263,406),23,titulo=True,ancho=355)
-        escribir(s,('¡Un nuevo recuerdo!' if getattr(partida,'_sello_nuevo',False) else '¡Lo lograste!') if gano else 'Probemos otra vez',(668,190),31,titulo=True,ancho=330)
+        escribir(s,RECOMPENSAS[juego-1][nivel] if gano else 'Cada intento te enseña algo.',(263,406),23,titulo=True,ancho=355)
+        escribir(s,('¡Un nuevo recuerdo!' if getattr(partida,'_premio_nuevo',False) else '¡Lo lograste!') if gano else 'Probemos otra vez',(668,190),31,titulo=True,ancho=330)
         escribir(s,f'{partida.puntos} / {partida.meta}',(668,258),49,negrita=True)
         escribir(s,'Tu resultado',(668,301),20)
         escribir(s,f'Mejor marca: {self.datos[str(juego)]["mejor"]}',(668,354),23,negrita=True)
-        escribir(s,f'{self.sellos} de 4 recuerdos reunidos',(668,400),20)
-        escribir(s,'¡El diario está completo!' if self.sellos==4 else 'La casita guarda tus aventuras.',(480,476),22,titulo=True)
-        for rect,label in ((REPETIR,'Otra ronda · Enter'),(VOLVER,'Elegir aventura · Esc')):
+        escribir(s,f'{self.niveles(juego)} de 3 premios de esta aventura',(668,400),20)
+        escribir(s,'¡El diario está completo!' if all(self.niveles(i) == 3 for i in range(1, 5)) else 'La casita guarda tus aventuras.',(480,476),22,titulo=True)
+        siguiente = self.siguiente(juego, nivel, partida)
+        accion = f'Nivel {siguiente + 1} · Enter' if siguiente != nivel else 'Otra ronda · Enter'
+        for rect,label in ((REPETIR,accion),(VOLVER,'Elegir aventura · Esc')):
             boton(s,rect,label)
         escribir(s,self.error or 'D: ver mi diario · Progreso guardado en esta PC',(480,619),17,ancho=820)
         if gano:
