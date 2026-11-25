@@ -2,7 +2,7 @@
 import math
 import random
 
-from ajustes import ALTO, ANCHO, NIDO, RADIO_NIDO
+from ajustes import ALTO, ANCHO, NIDO, RADIO_NIDO, META_BICHOS, TIEMPO_BICHOS
 
 
 def dentro_nido(pos):
@@ -11,10 +11,12 @@ def dentro_nido(pos):
 
 
 class Partida:
+    """Controla la captura y la entrega de bichos antes de que se acabe el tiempo."""
     def __init__(self):
-        self.tiempo = 60.0
+        """Prepara el reloj, la meta y la población inicial de bichos."""
+        self.tiempo = TIEMPO_BICHOS
         self.puntos = 0
-        self.meta = 8
+        self.meta = META_BICHOS
         self.bichos = []
         self.carga = None
         self.mensaje = "Atrapá un bichito con la pinza"
@@ -25,6 +27,7 @@ class Partida:
             self.crear(i >= 8)
 
     def crear(self, veneno=False):
+        """Crea un bicho con una posición y un movimiento propios."""
         while True:
             x, y = random.uniform(115, 845), random.uniform(175, 555)
             if math.dist((x, y), NIDO) > 135:
@@ -34,9 +37,11 @@ class Partida:
                                 fase=random.random()*math.tau))
 
     def avisar(self, mensaje):
+        """Muestra un mensaje breve sobre lo que pasó en la partida."""
         self.mensaje, self.aviso = mensaje, 2.5
 
     def actualizar(self, dt, pos, cerrada, mordida):
+        """Avanza los bichos y aplica la pinza, la entrega y las penalizaciones."""
         if self.fin or pos is None:
             return
         self.tiempo = max(0, self.tiempo-dt)
@@ -102,6 +107,7 @@ class Partida:
                     self.avisar("¡Lo tenés! Mantené la pinza y soltá en el nido")
 
     def soltar(self, pos, mensaje):
+        """Deja libre el bicho cargado en la posición indicada."""
         self.eventos.append(("escape", tuple(pos), 0))
         b = self.carga
         b.update(x=max(105,min(855,pos[0])),y=max(160,min(575,pos[1])),vx=-65,vy=-30)

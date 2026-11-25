@@ -13,11 +13,16 @@ TINTA=(30,19,41)
 ALTURA_CANASTA=555
 
 
+from ajustes import META_BANQUETE, TIEMPO_BANQUETE
+
+
 class Banquete:
+    """Controla la canasta, los objetos que caen y el combo de dulces."""
     def __init__(self):
-        self.tiempo=60.0
+        """Prepara la canasta, el reloj y la lista de objetos."""
+        self.tiempo=TIEMPO_BANQUETE
         self.puntos=0
-        self.meta=40
+        self.meta=META_BANQUETE
         self.fin=False
         self.eventos=[]
         self.objetos=[]
@@ -38,20 +43,24 @@ class Banquete:
 
     @property
     def multiplicador(self):
+        """Devuelve el valor de un dulce según el combo acumulado."""
         return min(3,1+self.combo//5)
 
     def crear(self,tipo=None):
+        """Incorpora un objeto que cae desde arriba de la pantalla."""
         if tipo is None:
             tipo=random.choices(['dulce','pocion','bomba'],[76,16,8])[0]
         self.objetos.append(dict(tipo=tipo,x=random.uniform(125,835),y=120.,
-                                 velocidad=random.uniform(130,175)+(60-self.tiempo)*.9,
+                                 velocidad=random.uniform(130,175)+(TIEMPO_BANQUETE-self.tiempo)*.9,
                                  fase=random.random()*math.tau,variante=random.randrange(3)))
 
     def avisar(self,mensaje):
+        """Guarda un mensaje breve para mostrar durante la ronda."""
         self.mensaje=mensaje
         self.aviso=1.8
 
     def recoger(self,objeto):
+        """Aplica el efecto del objeto que cruzó la boca de la canasta."""
         tipo=objeto['tipo']
         if tipo=='dulce':
             self.combo+=1
@@ -82,6 +91,7 @@ class Banquete:
                 self.fin=True
 
     def actualizar(self,dt,pos,cerrada=False,mordida=False):
+        """Mueve los objetos y comprueba el cruce de la canasta entre cuadros."""
         if self.fin or pos is None:
             return
         self.x=max(100,min(860,pos[0]))
@@ -105,7 +115,7 @@ class Banquete:
         self.hasta_estrella-=dt
         if self.hasta_objeto<=0:
             self.crear()
-            self.hasta_objeto=random.uniform(.65,.95)-min(.18,(60-self.tiempo)*.003)
+            self.hasta_objeto=random.uniform(.65,.95)-min(.18,(TIEMPO_BANQUETE-self.tiempo)*.003)
         if self.hasta_estrella<=0:
             self.crear('estrella')
             self.hasta_estrella=10
@@ -128,7 +138,9 @@ class Banquete:
         self.objetos=pendientes
 
     def dibujar(self,pantalla,fuentes,ahora):
+        """Dibuja el marcador, la canasta y los objetos en juego."""
         def texto(contenido,pos,tam=24,color=CREMA):
+            """Escribe una línea del marcador con la fuente indicada."""
             imagen=fuentes[tam].render(contenido,True,color)
             pantalla.blit(imagen,imagen.get_rect(center=pos))
         estado=f'COMBO {self.combo} · x{self.multiplicador}'
@@ -211,11 +223,13 @@ def icono(tipo,variante=0):
 
 
 def dibujar_objeto(pantalla,objeto,ahora):
+    """Dibuja el objeto en su posición actual."""
     imagen=icono(objeto['tipo'],objeto.get('variante',0))
     pantalla.blit(imagen,imagen.get_rect(center=(round(objeto['x']),round(objeto['y']))))
 
 
 def canasta(pantalla,x,y,recogidos=0,golpe=False):
+    """Compone la canasta y sus estados visuales."""
     ilustracion=sprite('canasta',148,110)
     if ilustracion is not None:
         ilustracion=pygame.transform.smoothscale(ilustracion,(148,110))

@@ -10,11 +10,16 @@ ROSA = (233,192,111)
 CREMA = (247,239,210)
 
 
+from ajustes import META_FAROLES, TIEMPO_FAROLES
+
+
 class Faroles:
+    """Administra las rondas de memoria de las constelaciones."""
     def __init__(self):
-        self.tiempo = 75.0
+        """Prepara los faroles y la primera secuencia."""
+        self.tiempo = TIEMPO_FAROLES
         self.puntos = 0
-        self.meta = 4
+        self.meta = META_FAROLES
         self.fin = False
         self.eventos = []
         self.fase = 'mirar'
@@ -26,6 +31,7 @@ class Faroles:
         self.nueva_secuencia()
 
     def nueva_secuencia(self):
+        """Elige el orden de faroles para la ronda actual."""
         self.secuencia = random.sample(range(6),3+self.puntos)
         self.paso = 0
         self.fase = 'mirar'
@@ -33,6 +39,7 @@ class Faroles:
         self.ultimo = None
 
     def encendido(self):
+        """Indica el farol que corresponde iluminar en la fase actual."""
         if self.fase == 'mirar':
             t = self.reloj-.8
             indice = int(max(0,t)/.85)
@@ -43,6 +50,7 @@ class Faroles:
         return None
 
     def actualizar(self, dt, pos, cerrada, mordida):
+        """Alterna demostración y turno de juego, y comprueba cada pinza."""
         if self.fin or pos is None:
             return
         self.destello = max(0,self.destello-dt)
@@ -94,7 +102,9 @@ class Faroles:
                 self.reloj = 0.0
 
     def dibujar(self, pantalla, fuentes, ahora):
+        """Dibuja los faroles, el recorrido acertado y el estado de la ronda."""
         def texto(contenido,pos,tam=24,color=CREMA):
+            """Escribe un indicador de la pantalla con el estilo definido."""
             imagen=fuentes[tam].render(contenido,True,color)
             pantalla.blit(imagen,imagen.get_rect(center=pos))
         cabecera(pantalla,2,'Faroles del jardín',f'RONDA {min(self.puntos+1,4)} · MEMORIA',
@@ -142,6 +152,7 @@ class Faroles:
 
 
 def cursor(pantalla,pos,cerrada,ahora):
+    """Dibuja la estrella que sigue a la mano."""
     x,y=pos
     color=ROSA if cerrada else CREMA
     # Dos bordes opuestos mantienen el cursor visible sobre papel y bosque.

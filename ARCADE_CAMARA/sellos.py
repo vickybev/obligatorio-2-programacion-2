@@ -9,7 +9,10 @@ ROSA=(233,192,111)
 CREMA=(247,239,210)
 
 
+from ajustes import META_SELLOS, TIEMPO_SELLOS
+
 def remuestrear(vertices,paso=17):
+    """Genera puntos espaciados a lo largo de los segmentos de una figura."""
     resultado=[]
     for a,b in zip(vertices,vertices[1:]):
         n=max(1,math.ceil(math.dist(a,b)/paso))
@@ -18,6 +21,7 @@ def remuestrear(vertices,paso=17):
 
 
 def simbolo_base(indice):
+    """Define el contorno de la figura asociada al índice."""
     cx,cy=480,380
     if indice==0:
         return 'CÍRCULO',[(cx+125*math.sin(i*math.tau/42),cy-125*math.cos(i*math.tau/42)) for i in range(43)]
@@ -39,15 +43,19 @@ def simbolo_base(indice):
 
 
 def simbolo(indice):
+    """Devuelve los puntos de la guía para el símbolo indicado."""
     nombre,puntos=simbolo_base(indice)
     return nombre,[(480+(x-480)*1.06,380+(y-380)*1.06) for x,y in puntos]
 
 
+
 class Sellos:
+    """Comprueba los trazos de la mano para completar los sellos."""
     def __init__(self):
-        self.tiempo=90.0
+        """Prepara el reloj, la primera figura y el estado del trazo."""
+        self.tiempo=TIEMPO_SELLOS
         self.puntos=0
-        self.meta=4
+        self.meta=META_SELLOS
         self.fin=False
         self.eventos=[]
         self.celebracion=0.0
@@ -59,6 +67,7 @@ class Sellos:
         self.punta=None
 
     def reiniciar_trazo(self):
+        """Borra el avance del sello actual y conserva el tiempo."""
         if self.celebracion or self.fin:
             return
         self.paso=0
@@ -68,6 +77,7 @@ class Sellos:
         self.punta=None
 
     def actualizar(self,dt,pos,cerrada,mordida=False):
+        """Comprueba los puntos del recorrido en orden durante la pinza."""
         if self.fin or pos is None:
             self.dibujando=False
             self.punta=None
@@ -120,7 +130,9 @@ class Sellos:
             self.eventos.append(('entrega',tuple(pos),self.puntos))
 
     def dibujar(self,pantalla,fuentes,ahora):
+        """Dibuja la guía, el trazo y los mensajes de la ronda."""
         def texto(contenido,pos,tam=24,color=CREMA):
+            """Escribe un indicador de la ronda en pantalla."""
             imagen=fuentes[tam].render(contenido,True,color)
             pantalla.blit(imagen,imagen.get_rect(center=pos))
         estado='BUSCÁ LA JOYA' if not self.iniciado else ('TRAZANDO MAGIA' if self.dibujando else 'PLUMA LEVANTADA')
