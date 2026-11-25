@@ -82,15 +82,8 @@ class Sellos:
             self.dibujando=False
             self.punta=None
             return
-        if self.punta is None:
-            self.punta=tuple(pos)
-        elif math.dist(pos,self.punta)>4:
-            distancia=math.dist(pos,self.punta)
-            respuesta=.19 if distancia<20 else .07
-            alpha=1-math.exp(-max(dt,.001)/respuesta)
-            alpha=min(alpha,900*max(dt,0)/distancia)
-            self.punta=tuple(a+(b-a)*alpha for a,b in zip(self.punta,pos))
-        pos=self.punta
+        # Vision ya estabiliza la pinza. La pluma y el trazo usan ese mismo punto.
+        self.punta = tuple(pos)
         if self.celebracion>0:
             self.celebracion=max(0,self.celebracion-dt)
             if self.celebracion==0:

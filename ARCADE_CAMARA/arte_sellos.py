@@ -26,8 +26,9 @@ def sprite(nombre,lado):
 
 
 def cursor(pantalla,pos,cerrada,ahora):
+    """Ancla la punta ilustrada al mismo punto que dibuja el trazo."""
     x,y=map(round,pos)
     pygame.draw.circle(pantalla,(233,192,111) if cerrada else (247,239,210),(x,y),7,2)
     imagen=sprite('pluma',65)
     if imagen is not None:
-        pantalla.blit(imagen,(x-5,y-imagen.get_height()+5))
+        pantalla.blit(imagen,(x,y-imagen.get_height()+1))

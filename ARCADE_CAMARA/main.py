@@ -302,7 +302,11 @@ def main():
 
             if entrada is not None:
                 ancho_control=ancho_vista if estado=='menu' else ANCHO
-                referencia='palma' if estado=='menu' or (estado=='juego' and elegido==3) else 'indice'
+                referencia = 'indice'
+                if estado == 'menu' or (estado == 'juego' and elegido == 3):
+                    referencia = 'palma'
+                elif estado == 'juego' and elegido == 4:
+                    referencia = 'pinza'
                 entrada.configurar(ancho_control,ALTO,referencia)
                 muestra=entrada.leer()
                 if muestra is not None:
@@ -388,14 +392,14 @@ def main():
                         if seleccion is not None:
                             elegido=seleccion
                             estado='instrucciones'
-                escribir(pantalla,'Deslizá de derecha a izquierda · Sostené la mano sobre la carta para abrir',(640,691),21,PAPEL)
+                escribir(pantalla,'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir',(640,691),21,PAPEL)
 
             elif estado == 'diario':
                 regresar=diario.album(pantalla,coleccion,pos,dt)
                 if activar and puntero and regresar.collidepoint(puntero): estado='menu'
 
             elif estado == 'instrucciones':
-                escribir(pantalla,f'AVENTURA 0{elegido} · EL CUADERNO DEL BOSQUE',(480,74),16,negrita=True)
+                escribir(pantalla,'CÓMO JUGAR',(480,74),19,negrita=True)
                 escribir(pantalla,{1:'Bichos a la boca',2:'Faroles del jardín',3:'Banquete del familiar',4:'Sellos de luna'}[elegido],(480,126),48,titulo=True,ancho=770)
                 separador(pantalla,480,180,300)
                 pasos = [('1','ACERCATE','Mové la boca con pulgar e índice separados.'),('2','¡ATRAPÁ!','Juntá los dos dedos cerca de un bichito amarillo.'),('3','A LA BOLSA','Mantené la pinza y abrila dentro de la bolsa.')]
@@ -424,7 +428,7 @@ def main():
                     efectos = Efectos()
                     particulas = Particulas()
                     estado,pausado='juego',False
-                escribir(pantalla,'Mostrá tu mano · Enter también inicia',(480,619),20)
+                escribir(pantalla,'Hacé pinza sobre Comenzar o presioná Enter',(480,619),20)
 
             elif estado == 'juego' and elegido in (2,3,4):
                 if not pausado and not preparando:
