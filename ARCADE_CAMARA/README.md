@@ -40,6 +40,8 @@ Los sonidos se sintetizaron para el proyecto con los generadores incluidos. El d
 
 ChatGPT se utilizó para apoyar la ideación, el código, las revisiones, la documentación y la preparación de la entrega. ImageGen se utilizó para crear las ilustraciones del juego. La [declaración de uso de IA](USO-IA.md) detalla las herramientas, las consignas de revisión, los prompts visuales y las referencias.
 
+En el menú, deslizá de derecha a izquierda para avanzar una carta. Al volver la mano a la derecha, el carrusel queda listo para el siguiente barrido. Las flechas permiten navegar en ambos sentidos.
+
 ## Organización
 
 | Archivo | Función |

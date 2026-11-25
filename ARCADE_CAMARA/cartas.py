@@ -186,10 +186,10 @@ class Carrusel(Coleccion):
             return
         if self.transicion<1:return
         lado=-1 if p[0]<self.carta.centerx-35 else (1 if p[0]>self.carta.centerx+35 else 0)
-        if lado and not self.lado_origen:
-            self.lado_origen=lado
-        elif lado and lado!=self.lado_origen:
-            self.mover(-1 if lado==1 else 1)
+        if lado == 1:
+            self.lado_origen = 1
+        elif lado == -1 and self.lado_origen == 1:
+            self.mover(1)
 
     def seleccionar(self,puntero):
         if puntero is None:return None

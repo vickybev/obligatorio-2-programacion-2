@@ -388,7 +388,7 @@ def main():
                         if seleccion is not None:
                             elegido=seleccion
                             estado='instrucciones'
-                escribir(pantalla,'Deslizá para cambiar · Mantené la mano sobre la carta para abrir',(640,691),21,PAPEL)
+                escribir(pantalla,'Deslizá de derecha a izquierda · Sostené la mano sobre la carta para abrir',(640,691),21,PAPEL)
 
             elif estado == 'diario':
                 regresar=diario.album(pantalla,coleccion,pos,dt)
