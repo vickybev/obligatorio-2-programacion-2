@@ -440,3 +440,5 @@ En Sellos de luna, la pluma y el trazo siguen el punto medio del pulgar y el ín
 La primera vuelta de Bichos incluye una práctica de pinza sin reloj en la guía. En el nivel 2 los bichos amarillos se asustan si la mano se acerca demasiado rápido. En el nivel 3, los marcados L se entregan a la Bolsa Luna y los marcados S a la Bolsa Sol. Faroles presenta recorridos por el contorno en el nivel 2 y deja solo las huellas durante el turno del nivel 3. Banquete introduce un pedido de dulce en el nivel 2 y una secuencia de ingredientes en el nivel 3.
 
 Los premios iniciales de cada aventura se ven en el menú al regresar. El diario registra los demás premios por nivel.
+
+Los dos niveles avanzados de Bichos tienen escenarios propios. El Claro de luciérnagas es un bosque dorado de tarde y el Jardín lunar es un claro nocturno azul. La cuenta presenta el lugar y el objetivo. La bolsa principal queda abajo al centro y la boca se mueve con el centro de la palma. En los niveles 2 y 3, capturar la luciérnaga activa siete segundos de mayor alcance.

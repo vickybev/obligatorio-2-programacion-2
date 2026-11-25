@@ -9,7 +9,7 @@ import pygame
 
 from juego import NIDO, REFUGIO_LUNA, Partida
 from vision import abrir_camara, redimensionar
-from ajustes import ALTO, ANCHO, FPS, FONDO, CREMA, LIMA, CORAL, VIOLETA, NIVELES_AVENTURAS
+from ajustes import ALTO, ANCHO, FPS, FONDO, CREMA, LIMA, CORAL, VIOLETA, NIVELES_AVENTURAS, NOMBRES_BICHOS, AYUDAS_BICHOS
 from efectos import Efectos
 from sonido import Sonido
 from particulas import Particulas
@@ -230,6 +230,10 @@ def main():
     frame = None
     estado = 'menu'
     partida = None
+    fondos_bichos = [mundos[0]]
+    for archivo in ('claro-luciernagas.png', 'jardin-lunar.png'):
+        ruta = Path(__file__).parent / 'assets' / archivo
+        fondos_bichos.append(Ambiente(pygame.image.load(str(ruta)).convert()))
     elegido = 1
     nivel = 0
     practica_lista = False
@@ -315,7 +319,7 @@ def main():
             if entrada is not None:
                 ancho_control=ancho_vista if estado=='menu' else ANCHO
                 referencia = 'indice'
-                if estado == 'menu' or (estado == 'juego' and elegido == 3):
+                if estado == 'menu' or (elegido == 1 and estado in ('instrucciones', 'juego')) or (estado == 'juego' and elegido == 3):
                     referencia = 'palma'
                 elif estado == 'juego' and elegido == 4:
                     referencia = 'pinza'
@@ -348,6 +352,8 @@ def main():
                 puntero=getattr(control,'pos_evento',None) or pos
 
             fondo_activo = bosque if estado in ('menu','diario','resultado') else mundos[elegido-1]
+            if elegido == 1 and estado in ('instrucciones', 'juego'):
+                fondo_activo = fondos_bichos[nivel]
             fondo_activo.actualizar(0 if estado=="juego" and (pausado or sin_mano) else dt)
             render_menu=estado=='menu'
             fondo_activo.dibujar(lienzo)
@@ -529,7 +535,7 @@ def main():
                 if partida.puntos > puntos_antes:
                     celebracion = 1.2
                 celebracion = max(0,celebracion-dt)
-                cabecera(pantalla,1,'Bichos a la boca','CAPTURA · TU BOLSITA DEL BOSQUE','BICHITOS A SALVO',partida.puntos,partida.meta,partida.tiempo)
+                cabecera(pantalla,1,'Bichos a la boca',f'NIVEL {nivel + 1} · {NOMBRES_BICHOS[nivel]}','BICHITOS A SALVO',partida.puntos,partida.meta,partida.tiempo)
                 pygame.draw.rect(pantalla,(117,142,86),(78,130,804,478),1,border_radius=30)
                 efectos.bolsa(pantalla,partida.carga is not None,ahora,bicho)
                 panel_papel(pantalla,(NIDO[0]-105,NIDO[1]-108,210,33))
@@ -542,7 +548,10 @@ def main():
                     panel_papel(pantalla, (REFUGIO_LUNA[0]-74, REFUGIO_LUNA[1]-78, 148, 33))
                     escribir(pantalla, 'Luna · Soltá acá' if partida.carga and partida.carga.get('luna') else 'Bolsa Luna',
                              (REFUGIO_LUNA[0], REFUGIO_LUNA[1]-61), 18, negrita=True)
-                for b in partida.bichos:
+                visibles = len(partida.bichos)
+                if preparando:
+                    visibles = round(visibles * max(0, 1 - cuenta_inicio / 1.1))
+                for b in partida.bichos[:visibles]:
                     bicho(pantalla,(b['x'],b['y']),b['malo'],b['fase'])
                     if b.get('asustado'):
                         escribir(pantalla,'!', (b['x'],b['y']-33),24,CREMA,negrita=True)
@@ -550,6 +559,15 @@ def main():
                         pygame.draw.circle(pantalla, (111,87,141) if b.get('luna') else (166,107,39),
                                            (round(b['x']),round(b['y']-30)),11)
                         escribir(pantalla,'L' if b.get('luna') else 'S',(b['x'],b['y']-30),14,CREMA,negrita=True)
+                if partida.bonus:
+                    bx, by = partida.bonus
+                    pygame.draw.circle(pantalla, (252, 221, 140), (bx, by), 25, 3)
+                    pygame.draw.circle(pantalla, (255, 245, 191), (bx, by), 7)
+                    escribir(pantalla, 'Luciérnaga', (bx, by-38), 19, CREMA, negrita=True)
+                if partida.luz and pos is not None:
+                    pygame.draw.circle(pantalla, (250, 220, 137), tuple(map(round,pos)), 82, 2)
+                    escribir(pantalla, f'Luz de encanto · {math.ceil(partida.luz)} s',
+                             (480, 153), 21, CREMA, negrita=True)
                 mensaje = partida.mensaje if partida.aviso>0 else ('Mantené la pinza y soltá en la bolsita' if partida.carga else 'Acercate a un bichito y cerrá la pinza')
                 panel_pie(pantalla,mensaje,compacto=True)
                 if pausado or sin_mano:
@@ -578,9 +596,12 @@ def main():
             if estado=='juego':
                 particulas.dibujar(pantalla,fuentes)
             if estado=='juego' and preparando and not sin_mano and not pausado:
-                panel_papel(pantalla,(310,235,340,190))
-                escribir(pantalla,str(max(1,math.ceil(cuenta_inicio))),(480,300),76,negrita=True)
-                escribir(pantalla,'¡Prepará tu mano!',(480,386),26,titulo=True)
+                panel_papel(pantalla,(250,225,460,199))
+                titulo = NOMBRES_BICHOS[nivel] if elegido == 1 else '¡Prepará tu mano!'
+                escribir(pantalla,f'Nivel {nivel + 1} · {titulo}',(480,258),26,negrita=True,ancho=420)
+                escribir(pantalla,str(max(1,math.ceil(cuenta_inicio))),(480,322),70,negrita=True)
+                if elegido == 1:
+                    escribir(pantalla,AYUDAS_BICHOS[nivel],(480,391),21,ancho=420)
             if estado!='menu':
                 regreso.dibujar(pantalla)
             if mostrar_camara and frame is not None:

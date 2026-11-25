@@ -2,10 +2,10 @@
 import math
 import random
 
-from ajustes import ALTO, ANCHO, NIDO, RADIO_NIDO, NIVELES_BICHOS
+from ajustes import ALTO, ANCHO, NIDO, RADIO_NIDO, NIVELES_BICHOS, LUCIERNAGA_DURACION
 
 
-REFUGIO_LUNA = (238, 476)
+REFUGIO_LUNA = (254, 476)
 
 def dentro_nido(pos, centro=NIDO):
     """Usa la misma elipse que aparece dibujada en pantalla."""
@@ -21,6 +21,9 @@ class Partida:
         self.nivel = nivel
         self.pos_anterior = None
         self.tipo_siguiente = 0
+        self.bonus = None
+        self.bonus_en = 5.0
+        self.luz = 0.0
         self.bichos = []
         self.carga = None
         self.mensaje = "Atrapá un bichito con la pinza"
@@ -60,6 +63,12 @@ class Partida:
         self.pos_anterior = tuple(pos)
         self.tiempo = max(0, self.tiempo-dt)
         self.aviso = max(0, self.aviso-dt)
+        if self.nivel:
+            self.luz = max(0, self.luz - dt)
+            if self.bonus is None and not self.luz:
+                self.bonus_en -= dt
+                if self.bonus_en <= 0:
+                    self.bonus = (random.randint(350, 610), random.randint(210, 270))
         if self.tiempo <= 0:
             self.fin = True
             return
@@ -69,7 +78,7 @@ class Partida:
             if distancia < 135 and not cerrada:
                 b['vx'] += dx/max(distancia,1)*220*dt
                 b['vy'] += dy/max(distancia,1)*220*dt
-            if self.nivel == 1 and not b['malo'] and rapidez > 520 and distancia < 105:
+            if self.nivel == 1 and not self.luz and not b['malo'] and rapidez > 520 and distancia < 105:
                 b['asustado'] = .45
                 b['vx'] += dx / max(distancia, 1) * 95
                 b['vy'] += dy / max(distancia, 1) * 95
@@ -112,7 +121,16 @@ class Partida:
             return
 
         if mordida:
-            cerca = [b for b in self.bichos if math.dist(pos,(b['x'],b['y'])) < 53 and not b.get('asustado')]
+            if self.bonus and math.dist(pos, self.bonus) < 62:
+                self.bonus = None
+                self.bonus_en = 12.0
+                self.luz = LUCIERNAGA_DURACION
+                self.avisar('¡Luz de encanto! Más alcance para atrapar bichitos')
+                self.eventos.append(('captura', tuple(pos), 0))
+                return
+            alcance = 82 if self.luz else 53
+            cerca = [b for b in self.bichos if math.dist(pos,(b['x'],b['y'])) < alcance
+                     and (self.luz or not b.get('asustado'))]
             if cerca:
                 b = min(cerca,key=lambda b:math.dist(pos,(b['x'],b['y'])))
                 self.bichos.remove(b)

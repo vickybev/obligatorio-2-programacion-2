@@ -1,7 +1,7 @@
 """Dimensiones, paleta y parámetros compartidos del juego."""
 
 ANCHO, ALTO = 960, 720
-NIDO = (735, 485)
+NIDO = (480, 485)
 RADIO_NIDO = 74
 FPS = 60
 CAMARA_ANCHO, CAMARA_ALTO = 640, 480
@@ -38,3 +38,9 @@ NIVELES_FAROLES = ((TIEMPO_FAROLES, META_FAROLES), (80, 5), (85, 6))
 NIVELES_BANQUETE = ((TIEMPO_BANQUETE, META_BANQUETE), (65, 55), (70, 72))
 NIVELES_SELLOS = ((TIEMPO_SELLOS, META_SELLOS), (105, 5), (120, 6))
 NIVELES_AVENTURAS = (NIVELES_BICHOS, NIVELES_FAROLES, NIVELES_BANQUETE, NIVELES_SELLOS)
+
+
+NOMBRES_BICHOS = ('La despensa del bosque', 'Claro de luciérnagas', 'Jardín lunar')
+AYUDAS_BICHOS = ('Atrapá y soltá en la bolsa', 'Acercate despacio o atrapá la luciérnaga',
+                 'Llevá cada bicho a su bolsa')
+LUCIERNAGA_DURACION = 7.0
