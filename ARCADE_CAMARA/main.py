@@ -9,7 +9,7 @@ import pygame
 
 from juego import NIDO, Partida
 from vision import abrir_camara, redimensionar
-from ajustes import ALTO, ANCHO, FPS, FONDO, CREMA, LIMA, CORAL, VIOLETA
+from ajustes import ALTO, ANCHO, FPS, FONDO, CREMA, LIMA, CORAL, VIOLETA, NIVELES_AVENTURAS
 from efectos import Efectos
 from sonido import Sonido
 from particulas import Particulas
@@ -230,6 +230,7 @@ def main():
     estado = 'menu'
     partida = None
     elegido = 1
+    nivel = 0
     particulas = Particulas()
     efectos = Efectos()
     pausado = False
@@ -286,12 +287,15 @@ def main():
                         ventana = pygame.display.set_mode(escritorio,pygame.NOFRAME) if completa else pygame.display.set_mode((ancho_vista,ALTO),pygame.RESIZABLE)
                     elif evento.key == pygame.K_p and estado == 'juego':
                         pausado = not pausado
+                    elif estado == 'instrucciones' and evento.key in (pygame.K_1, pygame.K_2, pygame.K_3):
+                        nivel = evento.key - pygame.K_1
                     elif evento.key in (pygame.K_RETURN,pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4):
                         if estado == 'menu':
                             elegido = coleccion.indice+1 if evento.key==pygame.K_RETURN else {pygame.K_2:2,pygame.K_3:3,pygame.K_4:4}.get(evento.key,1)
+                            nivel = 0
                             estado = 'instrucciones'
                         elif estado in ('instrucciones','resultado') and evento.key==pygame.K_RETURN:
-                            partida = {1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido]()
+                            partida = {1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
                             efectos = Efectos()
                             particulas = Particulas()
                             estado, pausado = 'juego',False
@@ -391,6 +395,7 @@ def main():
                         seleccion=coleccion.seleccionar(puntero)
                         if seleccion is not None:
                             elegido=seleccion
+                            nivel = 0
                             estado='instrucciones'
                 escribir(pantalla,'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir',(640,691),21,PAPEL)
 
@@ -402,33 +407,53 @@ def main():
                 escribir(pantalla,'CÓMO JUGAR',(480,74),19,negrita=True)
                 escribir(pantalla,{1:'Bichos a la boca',2:'Faroles del jardín',3:'Banquete del familiar',4:'Sellos de luna'}[elegido],(480,126),48,titulo=True,ancho=770)
                 separador(pantalla,480,180,300)
-                pasos = [('1','ACERCATE','Mové la boca con pulgar e índice separados.'),('2','¡ATRAPÁ!','Juntá los dos dedos cerca de un bichito amarillo.'),('3','A LA BOLSA','Mantené la pinza y abrila dentro de la bolsa.')]
-                if elegido==2:
-                    pasos = [('1','MIRÁ','Los faroles se iluminan uno por uno. Recordá el orden.'),('2','REPETÍ','En tu turno, cerrá la pinza sobre cada farol en ese orden.'),('3','CONSTELACIÓN','Abrí la pinza entre faroles y completá las cuatro rondas.')]
-                if elegido==3:
-                    pasos = [('1','MOVÉ LA CANASTA','La canasta sigue tu mano en todas las direcciones.'),('2','ELEGÍ LO RICO','Atrapá dulces; esquivá las pociones y las bombas.'),('3','COMBOS + IMÁN','Cinco dulces seguidos suben el combo. ¡Buscá la estrella!')]
-                if elegido==4:
-                    pasos = [('1','BUSCÁ EL INICIO','Acercá la mano a la joya; el trazo empieza ahí.'),('2','DIBUJÁ CON LA PINZA','Mantené los dedos juntos y seguí el punto que avanza.'),('3','LIBERÁ ESPÍRITUS','Completá círculo, triángulo, corazón y estrella.')]
-                cortos={1:['Acercate al amarillo','Cerrá la pinza para agarrar','Abrí la pinza en la bolsa'],2:['Mirá qué faroles se prenden','Recordá el orden','Repetilo haciendo pinza'],3:['Mové la canasta con la mano','Atrapá dulces y estrellas','Esquivá pociones y bombas'],4:['Acercate a la joya inicial','Cerrá la pinza y seguí la guía','Completá el dibujo mágico']}[elegido]
-                iconos={1:['dulce','estrella','canasta'],2:['farol','farol','farol'],3:['canasta','dulce','bomba'],4:['estrella','estrella','estrella']}[elegido]
-                for i,linea in enumerate(cortos):
-                    xx=72+i*278
-                    panel_papel(pantalla,(xx,211,260,230),(236,229,203))
-                    escribir(pantalla,f'0{i+1}',(xx+30,238),23,titulo=True)
-                    demo=pygame.Surface((240,110),pygame.SRCALPHA)
-                    animar_tutorial(demo,elegido,i,ahora)
-                    pantalla.blit(demo,(xx+10,249))
-                    palabras=linea.split(); mitad=(len(palabras)+1)//2
-                    escribir(pantalla,' '.join(palabras[:mitad]),(xx+130,378),22,negrita=True,ancho=236)
-                    escribir(pantalla,' '.join(palabras[mitad:]),(xx+130,408),22,negrita=True,ancho=236)
-                texto(pantalla,fuentes,{1:'8 bichitos en 60 s · Los violetas pican y restan tiempo',2:'75 s para repetir · Error: -4 s y volvés a mirar',3:'40 puntos en 60 s · Pociones: -4 s · Bombas: -6 s',4:'4 sellos en 90 s · Podés abrir la pinza y continuar'}[elegido],(480,490),22,TINTA,True)
+                pasos = {
+                    1: [('Acercá la boca', 'Mové la mano con los dedos abiertos.'),
+                        ('Hacé pinza', 'Juntá pulgar e índice sobre un bicho amarillo.'),
+                        ('Soltá en la bolsa', 'Llevá el bicho y abrí los dedos.')],
+                    2: [('Mirá los faroles', 'Esperá a que termine la secuencia.'),
+                        ('Repetí en orden', 'Juntá pulgar e índice sobre cada farol.'),
+                        ('Abrí entre toques', 'Separá los dedos antes del siguiente.')],
+                    3: [('Mové la palma', 'Llevá la canasta a izquierda o derecha.'),
+                        ('Recogé dulces', 'Alineá la canasta debajo del objeto.'),
+                        ('Esquivá peligros', 'Alejate de pociones y bombas.')],
+                    4: [('Apuntá a la joya', 'Llevá la punta de la pluma al inicio.'),
+                        ('Cerrá la pinza', 'Juntá pulgar e índice para dibujar.'),
+                        ('Seguí la guía', 'Mantené la pinza y seguí el punto.')],
+                }[elegido]
+                for i, (titulo_paso, detalle) in enumerate(pasos):
+                    xx = 72 + i * 278
+                    panel_papel(pantalla, (xx, 211, 260, 230), (236, 229, 203))
+                    escribir(pantalla, titulo_paso, (xx + 130, 237), 26, negrita=True, ancho=232)
+                    demo = pygame.Surface((240, 110), pygame.SRCALPHA)
+                    animar_tutorial(demo, elegido, i, ahora)
+                    pantalla.blit(demo, (xx + 10, 254))
+                    palabras = detalle.split()
+                    mitad = (len(palabras) + 1) // 2
+                    for fila, frase in enumerate((' '.join(palabras[:mitad]), ' '.join(palabras[mitad:]))):
+                        escribir(pantalla, frase, (xx + 130, 385 + 26 * fila), 20, ancho=232)
+                for i in range(3):
+                    selector = pygame.Rect(210 + i * 184, 453, 172, 36)
+                    sobre = puntero is not None and selector.collidepoint(puntero)
+                    if activar and sobre:
+                        nivel = i
+                    elegido_nivel = nivel == i
+                    color = MUSGO if elegido_nivel else (228, 218, 188)
+                    pygame.draw.rect(pantalla, color, selector, border_radius=8)
+                    if sobre:
+                        pygame.draw.rect(pantalla, MUSGO, selector, 2, border_radius=8)
+                    escribir(pantalla, f'Nivel {i + 1}', selector.center, 20,
+                             PAPEL if elegido_nivel else TINTA, negrita=elegido_nivel)
+                segundos, meta = NIVELES_AVENTURAS[elegido - 1][nivel]
+                unidad = ('bichitos', 'constelaciones', 'puntos', 'sellos')[elegido - 1]
+                escribir(pantalla, f'{meta} {unidad} en {int(segundos)} s', (480, 505), 22, negrita=True)
                 boton(pantalla,jugar,'Comenzar la aventura',puntero is not None and jugar.collidepoint(puntero))
                 if activar and puntero is not None and jugar.collidepoint(puntero):
-                    partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido]()
+                    partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
                     efectos = Efectos()
                     particulas = Particulas()
                     estado,pausado='juego',False
-                escribir(pantalla,'Hacé pinza sobre Comenzar o presioná Enter',(480,619),20)
+                escribir(pantalla,'Elegí con pinza o 1–3 · Enter para empezar',(480,619),20)
 
             elif estado == 'juego' and elegido in (2,3,4):
                 if not pausado and not preparando:
@@ -488,7 +513,7 @@ def main():
             elif estado == 'resultado':
                 diario.resultado(pantalla,elegido,partida,ahora)
                 if activar and puntero is not None and repetir.collidepoint(puntero):
-                    partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido]()
+                    partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
                     efectos = Efectos()
                     particulas = Particulas()
                     estado,pausado='juego',False

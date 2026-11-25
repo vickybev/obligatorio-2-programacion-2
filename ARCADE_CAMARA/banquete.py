@@ -13,16 +13,17 @@ TINTA=(30,19,41)
 ALTURA_CANASTA=555
 
 
-from ajustes import META_BANQUETE, TIEMPO_BANQUETE
+from ajustes import NIVELES_BANQUETE
 
 
 class Banquete:
     """Controla la canasta, los objetos que caen y el combo de dulces."""
-    def __init__(self):
+    def __init__(self, nivel=0):
         """Prepara la canasta, el reloj y la lista de objetos."""
-        self.tiempo=TIEMPO_BANQUETE
+        self.tiempo, self.meta = NIVELES_BANQUETE[nivel]
+        self.tiempo_inicial = self.tiempo
+        self.nivel = nivel
         self.puntos=0
-        self.meta=META_BANQUETE
         self.fin=False
         self.eventos=[]
         self.objetos=[]
@@ -49,9 +50,9 @@ class Banquete:
     def crear(self,tipo=None):
         """Incorpora un objeto que cae desde arriba de la pantalla."""
         if tipo is None:
-            tipo=random.choices(['dulce','pocion','bomba'],[76,16,8])[0]
+            tipo=random.choices(['dulce','pocion','bomba'],((76,16,8), (72,17,11), (68,18,14))[self.nivel])[0]
         self.objetos.append(dict(tipo=tipo,x=random.uniform(125,835),y=120.,
-                                 velocidad=random.uniform(130,175)+(TIEMPO_BANQUETE-self.tiempo)*.9,
+                                 velocidad=random.uniform(130,175)+self.nivel*24+(self.tiempo_inicial-self.tiempo)*.9,
                                  fase=random.random()*math.tau,variante=random.randrange(3)))
 
     def avisar(self,mensaje):
@@ -115,7 +116,7 @@ class Banquete:
         self.hasta_estrella-=dt
         if self.hasta_objeto<=0:
             self.crear()
-            self.hasta_objeto=random.uniform(.65,.95)-min(.18,(TIEMPO_BANQUETE-self.tiempo)*.003)
+            self.hasta_objeto=random.uniform(.65,.95)-min(.18,(self.tiempo_inicial-self.tiempo)*.003)
         if self.hasta_estrella<=0:
             self.crear('estrella')
             self.hasta_estrella=10

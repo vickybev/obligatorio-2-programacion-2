@@ -2,7 +2,7 @@
 import math
 import random
 
-from ajustes import ALTO, ANCHO, NIDO, RADIO_NIDO, META_BICHOS, TIEMPO_BICHOS
+from ajustes import ALTO, ANCHO, NIDO, RADIO_NIDO, NIVELES_BICHOS
 
 
 def dentro_nido(pos):
@@ -12,18 +12,17 @@ def dentro_nido(pos):
 
 class Partida:
     """Controla la captura y la entrega de bichos antes de que se acabe el tiempo."""
-    def __init__(self):
+    def __init__(self, nivel=0):
         """Prepara el reloj, la meta y la población inicial de bichos."""
-        self.tiempo = TIEMPO_BICHOS
+        self.tiempo, self.meta = NIVELES_BICHOS[nivel]
         self.puntos = 0
-        self.meta = META_BICHOS
         self.bichos = []
         self.carga = None
         self.mensaje = "Atrapá un bichito con la pinza"
         self.aviso = 3.0
         self.fin = False
         self.eventos = []
-        for i in range(11):
+        for i in range(11 + nivel * 2):
             self.crear(i >= 8)
 
     def crear(self, veneno=False):

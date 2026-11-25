@@ -9,7 +9,7 @@ ROSA=(233,192,111)
 CREMA=(247,239,210)
 
 
-from ajustes import META_SELLOS, TIEMPO_SELLOS
+from ajustes import NIVELES_SELLOS
 
 def remuestrear(vertices,paso=17):
     """Genera puntos espaciados a lo largo de los segmentos de una figura."""
@@ -35,6 +35,12 @@ def simbolo_base(indice):
             y=13*math.cos(t)-5*math.cos(2*t)-2*math.cos(3*t)-math.cos(4*t)
             puntos.append((cx+x*8,cy-y*8))
         return 'CORAZÓN',puntos
+    if indice == 4:
+        return 'ROMBO', remuestrear([(480,230),(625,380),(480,530),(335,380),(480,230)])
+    if indice == 5:
+        vertices = [(480 + 154*math.sin(t), 380 + 120*math.sin(2*t))
+                    for t in (i*math.tau/56 for i in range(57))]
+        return 'INFINITO', remuestrear(vertices)
     vertices=[]
     for i in range(11):
         a=i*math.pi/5-math.pi/2;r=140 if i%2==0 else 61
@@ -51,11 +57,11 @@ def simbolo(indice):
 
 class Sellos:
     """Comprueba los trazos de la mano para completar los sellos."""
-    def __init__(self):
+    def __init__(self, nivel=0):
         """Prepara el reloj, la primera figura y el estado del trazo."""
-        self.tiempo=TIEMPO_SELLOS
+        self.tiempo, self.meta = NIVELES_SELLOS[nivel]
+        self.tolerancia = (29, 26, 23)[nivel]
         self.puntos=0
-        self.meta=META_SELLOS
         self.fin=False
         self.eventos=[]
         self.celebracion=0.0
@@ -101,7 +107,7 @@ class Sellos:
             self.dibujando=False
             return
         if not self.iniciado:
-            if math.dist(pos,self.guia[0])>=29:
+            if math.dist(pos,self.guia[0])>=self.tolerancia:
                 return
             self.iniciado=True
         if not self.dibujando:
@@ -112,7 +118,7 @@ class Sellos:
             self.eventos.append(("polvo",tuple(pos),0))
             self.trazo=self.trazo[-1800:]
         anterior=self.paso
-        while self.paso<len(self.guia) and math.dist(pos,self.guia[self.paso])<29:
+        while self.paso<len(self.guia) and math.dist(pos,self.guia[self.paso])<self.tolerancia:
             self.paso+=1
         if self.paso>anterior and self.paso//7!=anterior//7:
             self.eventos.append(('captura',tuple(pos),0))

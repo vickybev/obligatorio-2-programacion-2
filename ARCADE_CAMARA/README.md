@@ -421,3 +421,16 @@ navegación completa y persistencia del diario.
 - **20 de noviembre.** El prototipo entró al repositorio común. Luego se concentró la captura en `vision.py` y se quitó el modo de juego con mouse.
 
 Las primeras fechas corresponden a las copias locales y notas del proyecto. El historial de Git comienza con la incorporación al repositorio.
+
+## Niveles de las aventuras
+
+Desde las instrucciones elegí Nivel 1, 2 o 3 con una pinza sobre el botón, con el mouse o con las teclas 1–3. Enter comienza la partida. Al repetir se conserva el nivel.
+
+| Aventura | Nivel 1 | Nivel 2 | Nivel 3 |
+| --- | --- | --- | --- |
+| Bichos a la boca | 8 en 60 s | 10 en 65 s y más bichos violetas | 13 en 75 s y todavía más violetas |
+| Faroles del jardín | 4 secuencias en 75 s | 5 en 80 s, señal más rápida | 6 en 85 s, señal más rápida y más secuencias largas |
+| Banquete del familiar | 40 puntos en 60 s | 55 en 65 s, con caída más rápida | 72 en 70 s, con más peligros |
+| Sellos de luna | 4 figuras en 90 s | 5 en 105 s, con rombo | 6 en 120 s, con infinito y mayor precisión |
+
+En Sellos de luna, la pluma y el trazo siguen el punto medio del pulgar y el índice. Los tiempos de Faroles corresponden al turno de repetir la secuencia.

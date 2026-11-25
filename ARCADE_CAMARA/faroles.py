@@ -10,16 +10,16 @@ ROSA = (233,192,111)
 CREMA = (247,239,210)
 
 
-from ajustes import META_FAROLES, TIEMPO_FAROLES
+from ajustes import NIVELES_FAROLES
 
 
 class Faroles:
     """Administra las rondas de memoria de las constelaciones."""
-    def __init__(self):
+    def __init__(self, nivel=0):
         """Prepara los faroles y la primera secuencia."""
-        self.tiempo = TIEMPO_FAROLES
+        self.tiempo, self.meta = NIVELES_FAROLES[nivel]
+        self.ritmo = (.85, .72, .60)[nivel]
         self.puntos = 0
-        self.meta = META_FAROLES
         self.fin = False
         self.eventos = []
         self.fase = 'mirar'
@@ -32,7 +32,7 @@ class Faroles:
 
     def nueva_secuencia(self):
         """Elige el orden de faroles para la ronda actual."""
-        self.secuencia = random.sample(range(6),3+self.puntos)
+        self.secuencia = random.sample(range(6), min(6, 3+self.puntos))
         self.paso = 0
         self.fase = 'mirar'
         self.reloj = 0.0
@@ -42,8 +42,8 @@ class Faroles:
         """Indica el farol que corresponde iluminar en la fase actual."""
         if self.fase == 'mirar':
             t = self.reloj-.8
-            indice = int(max(0,t)/.85)
-            if t>=0 and indice<len(self.secuencia) and t%.85<.58:
+            indice = int(max(0,t)/self.ritmo)
+            if t>=0 and indice<len(self.secuencia) and t%self.ritmo<self.ritmo*.68:
                 return self.secuencia[indice]
         if self.destello>0:
             return self.ultimo
@@ -60,7 +60,7 @@ class Faroles:
             actual = self.encendido()
             if actual is not None and actual != anterior:
                 self.eventos.append(('captura',LUGARES[actual],0))
-            if self.reloj >= .8+len(self.secuencia)*.85+.4:
+            if self.reloj >= .8+len(self.secuencia)*self.ritmo+.4:
                 self.fase = 'repetir'
             return
         if self.fase == 'celebrar':
