@@ -13,7 +13,7 @@ py -3.12 -m venv .venv
 .venv\Scripts\python.exe main.py
 ~~~
 
-También podés abrir ABRIR_JUEGO.cmd después de instalar las dependencias. Mostrá una mano completa con luz de frente.
+En Windows, podés hacer doble clic en ABRIR_JUEGO.cmd. Si encuentra el entorno del curso lo reutiliza. En una descarga nueva, pide Python 3.12 con el lanzador py y descarga las dependencias la primera vez. Mostrá una mano completa con luz de frente.
 
 - Mové la mano con pulgar e índice separados para desplazar la criatura.
 - Juntalos sobre la tarjeta del primer juego para entrar. El mouse y Enter
