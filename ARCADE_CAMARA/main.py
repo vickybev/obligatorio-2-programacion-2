@@ -269,6 +269,7 @@ def main():
     jugadores = SelectorJugadores(diario.ruta)
     perfil_activo = None
     casa_mascota = CasaMascota(diario.ruta)
+    arrastre_raton = False
     companero = Companero()
     regreso = Regreso()
     jugar = pygame.Rect(305,522,350,62)
@@ -363,7 +364,7 @@ def main():
                 referencia = 'indice'
                 if estado in ('menu', 'perfiles') or (elegido == 1 and estado == 'instrucciones') or (estado == 'juego' and elegido in (1, 2, 3)):
                     referencia = 'palma'
-                elif estado == 'juego' and elegido == 4:
+                elif estado == 'mascota' or (estado == 'juego' and elegido == 4):
                     referencia = 'pinza'
                 entrada.configurar(ancho_control,ALTO,referencia)
                 muestra=entrada.leer()
@@ -492,7 +493,14 @@ def main():
                 escribir(pantalla,'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir',(640,691),21,PAPEL)
 
             elif estado == 'mascota':
-                casa_mascota.dibujar(pantalla, puntero, activar, ahora, diario)
+                if click:
+                    arrastre_raton = True
+                raton_presionado = pygame.mouse.get_pressed()[0]
+                casa_puntero = coordenadas_raton() if arrastre_raton else puntero
+                casa_mascota.dibujar(pantalla, casa_puntero, click if arrastre_raton else mordida,
+                                    ahora, diario, raton_presionado if arrastre_raton else cerrada)
+                if not raton_presionado:
+                    arrastre_raton = False
 
             elif estado == 'diario':
                 regresar=diario.album(pantalla,coleccion,pos,dt)
@@ -665,6 +673,8 @@ def main():
                 elif activar and puntero and VOLVER.collidepoint(puntero):
                     estado='menu'
 
+            if estado != 'mascota' and casa_mascota.objeto is not None:
+                casa_mascota.soltar()
             if estado=='juego':
                 particulas.dibujar(pantalla,fuentes)
             if estado=='juego' and preparando and not sin_mano and not pausado:

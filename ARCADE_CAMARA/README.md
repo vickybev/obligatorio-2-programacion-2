@@ -447,7 +447,7 @@ Los dos niveles avanzados de Bichos tienen escenarios propios. El Claro de luci�
 
 Al abrir el juego, elegí **Nueva partida** y escribí un nombre, o seleccioná un perfil y presioná **Continuar**. Cada perfil guarda sus niveles, premios, cuidados y vestimenta en esta PC. Continuar vuelve a la última aventura en el siguiente nivel disponible. Una ronda interrumpida vuelve a empezar. Con **J** podés cambiar de jugador desde el menú. Si existe un diario de una versión anterior, aparece como **Partida anterior**.
 
-Entrá a **Su casita** con una pinza, clic o **H** desde el menú. Podés darle de comer, bañarlo, jugar y acariciarlo. Cada primera victoria de nivel añade una prenda al **Armario**. Elegí ahí qué se pone. La ropa se mantiene puesta en el menú, la casa y las partidas hasta que elijas otra o vuelvas al aspecto original. Ganar una prenda nueva la guarda y conserva la que está puesta.
+Entrá a **Su casita** con una pinza, clic o **H** desde el menú. Hacé pinza para agarrar un objeto y abrila para soltarlo. Acercá el bocadito a la boca, pasá la esponja varias veces por el pelo, arrastrá y soltá la pelota o el aro, o hacé pinza sobre tu compañero para acariciarlo. Para entrar al armario, agarrá el tirador y deslizalo a la izquierda. Con mouse, mantené el botón izquierdo para agarrar y arrastrar. Cada primera victoria de nivel añade una prenda al **Armario**. Elegí ahí qué se pone. La ropa se mantiene puesta en el menú, la casa y las partidas hasta que elijas otra o vuelvas al aspecto original. Ganar una prenda nueva la guarda y conserva la que está puesta.
 
 Las rutas, nombres y guardado de jugadores están en perfiles.py. casa_mascota.py administra los cuidados y el armario. armario.py define y dibuja las prendas.
 

@@ -15,3 +15,7 @@ Fondos originales generados con ImageGen para los niveles 2 y 3 de Bichos a la b
 ## Escenarios avanzados de Faroles, Banquete y Sellos
 
 Los archivos niveles-faroles.png, niveles-banquete.png y niveles-sellos.png son ilustraciones originales generadas con ImageGen. Cada lámina contiene dos escenarios, uno por nivel avanzado. Brief visual: patio turquesa y jardín violeta para Faroles, confitería rosa y despensa ámbar para Banquete, santuario de amatista y observatorio azul para Sellos. Los detalles se concentran en los bordes para dejar el centro disponible para jugar.
+
+## Habitación del compañero
+
+Ilustración original generada con ImageGen para habitacion-familiar.png. Los objetos interactivos y la puerta se dibujan en Pygame.

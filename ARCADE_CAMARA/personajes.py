@@ -46,7 +46,7 @@ def dibujar_bicho(pantalla, pos, malo, tiempo, escala):
     return True
 
 
-def dibujar_familiar(pantalla, pos, cerrada, tiempo, angulo=0, prenda=None):
+def dibujar_familiar(pantalla, pos, cerrada, tiempo, angulo=0, prenda=None, escala=1.0):
     imagen = variante('familiar',102,0)
     if imagen is None:
         return False
@@ -62,6 +62,6 @@ def dibujar_familiar(pantalla, pos, cerrada, tiempo, angulo=0, prenda=None):
             pygame.draw.polygon(capa,(255,243,217),[(x+dx-3,y+10),(x+dx+3,y+10),(x+dx,y+15)])
     if prenda is not None:
         dibujar_prenda(capa, prenda)
-    if angulo: capa=pygame.transform.rotate(capa,angulo)
+    if angulo or escala != 1: capa=pygame.transform.rotozoom(capa,angulo,escala)
     pantalla.blit(capa,capa.get_rect(center=tuple(map(round,pos))))
     return True

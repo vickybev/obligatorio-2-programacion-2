@@ -1,6 +1,9 @@
 """Rincón persistente del compañero de La casita."""
 import json
 import math
+import random
+from pathlib import Path
+from functools import lru_cache
 
 import pygame
 
@@ -9,9 +12,44 @@ from personajes import dibujar_familiar
 from armario import PRENDAS
 
 CUIDADOS = ('Comida', 'Baño', 'Juego', 'Caricias')
-BOTONES = tuple(pygame.Rect(92 + i * 195, 527, 186, 55) for i in range(4))
-MASCOTA = pygame.Rect(385, 216, 190, 170)
-ABRIR_ARMARIO = pygame.Rect(700, 75, 171, 50)
+HABITACION = pygame.Rect(53, 159, 854, 462)
+MASCOTA = pygame.Rect(399, 378, 162, 139)
+CENTRO_MASCOTA = (480, 448)
+BOCA = (480, 467)
+PUERTA = pygame.Rect(641, 364, 137, 73)
+TIRADOR = (716, 399)
+OBJETOS = {'comida': (166, 477), 'esponja': (835, 477),
+           'pelota': (585, 538), 'aro': (676, 533)}
+
+
+@lru_cache(maxsize=1)
+def fondo_habitacion():
+    """Carga la ilustración del cuarto una sola vez."""
+    ruta = Path(__file__).parent / 'assets' / 'habitacion-familiar.png'
+    return pygame.transform.smoothscale(pygame.image.load(str(ruta)).convert(), HABITACION.size)
+
+
+def dibujar_objeto(s, nombre, pos):
+    """Dibuja los objetos que se pueden agarrar, con su contorno visible."""
+    x, y = map(round, pos)
+    if nombre == 'esponja':
+        pygame.draw.rect(s, (122, 80, 42), (x-23,y-14,46,28), border_radius=7)
+        pygame.draw.rect(s, (248, 192, 88), (x-20,y-12,40,24), border_radius=6)
+        for dx, dy in ((-10,-4),(5,4),(11,-5),(-3,7)):
+            pygame.draw.circle(s, (211,147,58), (x+dx,y+dy),3)
+    elif nombre == 'comida':
+        rect = pygame.Rect(x-19,y-11,38,22)
+        pygame.draw.rect(s, (112,66,38), rect, border_radius=6)
+        pygame.draw.rect(s, (197,132,67), rect.inflate(-4,-4), border_radius=5)
+        for dx, dy in ((-10,-3),(0,4),(9,-4),(12,4),(-5,6)):
+            pygame.draw.circle(s,(251,203,111),(x+dx,y+dy),2)
+    elif nombre == 'pelota':
+        pygame.draw.circle(s,(113,53,89),(x,y),17)
+        pygame.draw.circle(s,(224,120,153),(x-1,y-2),14)
+        pygame.draw.arc(s,(255,218,180),(x-11,y-15,18,23),.2,2.6,3)
+    else:
+        pygame.draw.circle(s,(44,85,84),(x,y),21,7)
+        pygame.draw.circle(s,(139,212,186),(x-1,y-1),19,4)
 
 
 class CasaMascota:
@@ -34,6 +72,12 @@ class CasaMascota:
         self.mensaje = 'Tu compañero está feliz de verte'
         self.accion = None
         self.hasta = 0
+        self.objeto = None
+        self.pos_objeto = None
+        self.ultimo_roce = None
+        self.espuma = 0.0
+        self.vuelo = None
+        self.apertura = 0.0
 
     def cuidar(self, accion, ahora):
         """Suma el cuidado, responde con una animación y guarda el estado."""
@@ -41,7 +85,7 @@ class CasaMascota:
         self.accion = accion
         self.hasta = ahora + 1.8
         self.mensaje = {
-            'Comida': '¡Ñam! Se comió un bocadito',
+            'Comida': random.choice(('¡Ñam, ñam!', '¡Qué rico estaba!', '¡Un bocadito delicioso!')),
             'Baño': '¡Listo! Quedó limpito',
             'Juego': '¡Otra vez! Le encantó jugar',
             'Caricias': 'Cerró los ojos de lo contento que está',
@@ -96,38 +140,154 @@ class CasaMascota:
                 escribir(pantalla,estado,(rect.centerx,rect.top+50),16,MUSGO)
         escribir(pantalla,'Completá niveles para sumar prendas al armario',(480,590),20)
 
-    def dibujar(self, pantalla, puntero, activar, ahora, diario):
-        """Presenta cuatro acciones de cuidado con respuesta visual."""
+    def soltar(self):
+        """Vuelve a dejar el objeto en su lugar si se cancela el gesto."""
+        self.objeto = None
+        self.pos_objeto = None
+        self.ultimo_roce = None
+        self.espuma = 0
+        self.apertura = 0
+
+    def actualizar(self, puntero, presiona, sostiene, ahora):
+        """Interpreta pinza, arrastre y suelta en las estaciones del cuarto."""
+        if puntero is None:
+            self.soltar()
+            return
+        if presiona and self.objeto is None and not self.vuelo:
+            if math.dist(puntero, TIRADOR) <= 25:
+                self.objeto = 'puerta'
+                self.pos_objeto = puntero
+            else:
+                for nombre, posicion in OBJETOS.items():
+                    if math.dist(puntero, posicion) <= 30:
+                        self.objeto = nombre
+                        self.pos_objeto = puntero
+                        break
+                if self.objeto is None and MASCOTA.collidepoint(puntero):
+                    self.cuidar('Caricias', ahora)
+        if self.objeto is None:
+            return
+        if not sostiene:
+            if self.objeto in ('pelota', 'aro'):
+                origen = self.pos_objeto
+                if math.dist(origen, OBJETOS[self.objeto]) > 26:
+                    self.vuelo = (self.objeto, origen, ahora)
+            self.soltar()
+            return
+        if self.objeto == 'puerta':
+            self.apertura = max(0, min(1, (self.pos_objeto[0] - puntero[0]) / 54))
+            if self.apertura >= 1:
+                self.armario = True
+                self.soltar()
+            return
+
+        self.pos_objeto = puntero
+        if self.objeto == 'comida' and math.dist(puntero, BOCA) < 34:
+            self.cuidar('Comida', ahora)
+            self.soltar()
+        elif self.objeto == 'esponja':
+            if not MASCOTA.collidepoint(puntero):
+                self.ultimo_roce = None
+                return
+            if self.ultimo_roce is not None:
+                distancia = math.dist(puntero, self.ultimo_roce)
+                if 3 <= distancia <= 65:
+                    self.espuma += distancia
+                if distancia < 3:
+                    return
+            self.ultimo_roce = puntero
+            if self.espuma >= 140:
+                self.cuidar('Baño', ahora)
+                self.soltar()
+
+    def dibujar(self, pantalla, puntero, activar, ahora, diario, sostenido=False):
+        """Dibuja la habitación y anima la respuesta a cada cuidado."""
         if self.armario:
             self.dibujar_armario(pantalla,puntero,activar,ahora,diario)
             return
-        if activar and puntero is not None:
-            if ABRIR_ARMARIO.collidepoint(puntero):
-                self.armario = True
-                return
-            for indice, rect in enumerate(BOTONES):
-                if rect.collidepoint(puntero):
-                    self.cuidar(CUIDADOS[indice], ahora)
-                    break
-            else:
-                if MASCOTA.collidepoint(puntero):
-                    self.cuidar('Caricias', ahora)
-        papel(pantalla, (53,40,854,600))
-        escribir(pantalla,'La casa de tu compañero',(416,96),36,titulo=True,ancho=490)
-        boton(pantalla, ABRIR_ARMARIO, 'Armario')
-        escribir(pantalla,self.mensaje,(480,152),22,ancho=720)
-        pygame.draw.ellipse(pantalla,(192,179,129),(376,360,208,29))
+        self.actualizar(puntero,activar,sostenido,ahora)
+        if self.armario:
+            self.dibujar_armario(pantalla,puntero,False,ahora,diario)
+            return
+
+        papel(pantalla, (35,40,890,635))
+        escribir(pantalla,'La casa de tu compañero',(433,91),37,titulo=True,ancho=650)
+        pantalla.blit(fondo_habitacion(),HABITACION)
+        pygame.draw.rect(pantalla,(116,91,62),HABITACION,2)
+
+        # El pomo y la hoja móvil siguen el frente del mueble pintado en el fondo.
+        ancho = round(PUERTA.width * (1 - self.apertura * .8))
+        puerta = pygame.Rect(PUERTA.left,PUERTA.top,ancho,PUERTA.height)
+        pygame.draw.rect(pantalla,(86,49,28),PUERTA,border_radius=3)
+        pygame.draw.rect(pantalla,(145,86,44),puerta,border_radius=3)
+        if ancho > 24:
+            pygame.draw.rect(pantalla,(181,119,66),puerta.inflate(-14,-13),2,border_radius=3)
+        pomo = (min(puerta.right - 8,TIRADOR[0]),TIRADOR[1])
+        if puntero is not None and math.dist(puntero, TIRADOR) <= 25:
+            pygame.draw.circle(pantalla,(255,223,149),pomo,12,2)
+        pygame.draw.circle(pantalla,(245,199,102),pomo,7)
+        escribir(pantalla,'Armario',(712,350),19,PAPEL,negrita=True)
+
+        # Estaciones alrededor de una alfombra, en la zona cómoda de la cámara.
+        pygame.draw.ellipse(pantalla,(99,67,44),(121,469,90,27))
+        pygame.draw.ellipse(pantalla,(190,150,85),(124,466,84,25),3)
+        pygame.draw.rect(pantalla,(91,131,126),(800,473,70,30),border_radius=9)
+        pygame.draw.ellipse(pantalla,(174,217,208),(798,466,74,18))
+        for i in range(5):
+            pygame.draw.circle(pantalla,(222,245,232),(808 + i*12,472 - i%2*6),9)
+
+        salto = 0
+        avance = 0
+        if self.vuelo:
+            juguete, origen, inicio = self.vuelo
+            avance = min(1, (ahora - inicio)/.75)
+            salto = 45 * math.sin(avance*math.pi)
+            if avance >= 1:
+                self.vuelo = None
+                self.cuidar('Juego', ahora)
         activo = ahora < self.hasta
-        salto = 18 * abs(math.sin(ahora * 10)) if activo and self.accion == 'Juego' else 0
-        dibujar_familiar(pantalla,(480,305-salto),activo and self.accion == 'Comida',ahora,prenda=self.prenda)
-        if activo:
-            color = (116,185,193) if self.accion == 'Baño' else (218,151,123)
-            for indice in range(6):
-                fase = ahora * 1.9 + indice * math.tau/6
-                x, y = 480 + math.cos(fase)*80, 300 + math.sin(fase)*63
-                pygame.draw.circle(pantalla,color,(round(x),round(y)),4 + indice%3,2)
-        escribir(pantalla,'Hacé pinza sobre él para acariciarlo',(480,436),21,MUSGO)
-        for accion, rect in zip(CUIDADOS, BOTONES):
-            boton(pantalla,rect,accion,puntero is not None and rect.collidepoint(puntero))
-            escribir(pantalla,f'{self.cuidados[accion]} veces',
-                     (rect.centerx, 602),17,TINTA)
+        boca_abierta = self.objeto == 'comida' and self.pos_objeto is not None and math.dist(self.pos_objeto, BOCA) < 100
+        if activo and self.accion == 'Comida':
+            tiempo_comiendo = 1.8 - (self.hasta - ahora)
+            boca_abierta = tiempo_comiendo < .8 and int(tiempo_comiendo * 9) % 2 == 0
+        if self.vuelo and avance > .68:
+            boca_abierta = True
+        mascota = (CENTRO_MASCOTA[0], CENTRO_MASCOTA[1] - salto)
+        pygame.draw.ellipse(pantalla,(91,81,49),(414,512,132,18))
+        dibujar_familiar(pantalla,mascota,not boca_abierta,ahora,prenda=self.prenda,escala=1.62)
+        if self.vuelo:
+            x = origen[0] + (BOCA[0] - origen[0])*avance
+            y = origen[1] + (BOCA[1] - origen[1])*avance - 100*math.sin(avance*math.pi)
+            dibujar_objeto(pantalla,juguete,(x,y))
+
+        for objeto, posicion in OBJETOS.items():
+            volando = self.vuelo and objeto == self.vuelo[0]
+            if self.objeto != objeto and not volando:
+                dibujar_objeto(pantalla,objeto,posicion)
+        if self.objeto in OBJETOS:
+            dibujar_objeto(pantalla,self.objeto,self.pos_objeto)
+
+        if self.espuma or (activo and self.accion == 'Baño'):
+            cantidad = min(12, int(self.espuma//12)+2) if self.espuma else 8
+            for i in range(cantidad):
+                a = i * 2.4
+                x, y = round(480+math.cos(a)*(22+i*3)), round(448+math.sin(a)*(18+i*2))
+                if self.espuma:
+                    pygame.draw.circle(pantalla,(218,246,237),(x,y),8+i%4)
+                    pygame.draw.circle(pantalla,(123,183,183),(x,y),8+i%4,2)
+                else:
+                    pygame.draw.line(pantalla,(255,226,130),(x-5,y),(x+5,y),2)
+                    pygame.draw.line(pantalla,(255,226,130),(x,y-5),(x,y+5),2)
+        mensaje = self.mensaje if activo else {
+            'comida':'Acercá el bocadito a su boca',
+            'esponja':'Pasá la esponja varias veces sobre el pelo',
+            'pelota':'Arrastrá la pelota y soltala',
+            'aro':'Arrastrá el aro y soltalo',
+            'puerta':'Llevá el tirador hacia la izquierda',
+        }.get(self.objeto,'Hacé pinza para agarrar un objeto o acariciar al compañero')
+        if self.objeto is None and puntero is not None and math.dist(puntero, TIRADOR) <= 25:
+            mensaje = 'Hacé pinza en el tirador y arrastrá hacia la izquierda'
+        escribir(pantalla,mensaje,(480,646),21,ancho=800)
+        for nombre, x in (('Bocadito',166),('Pelota',585),('Aro',676),('Esponja',835)):
+            papel(pantalla,(x-44,564 if nombre in ('Pelota','Aro') else 509,88,25))
+            escribir(pantalla,nombre,(x,576 if nombre in ('Pelota','Aro') else 521),16)
