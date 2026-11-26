@@ -291,7 +291,7 @@ def main():
                     andando = False
                 elif estado == 'perfiles':
                     if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
-                        pygame.key.stop_text_input()
+                        jugadores.enfocar(False)
                         if perfil_activo is None:
                             andando = False
                         else:

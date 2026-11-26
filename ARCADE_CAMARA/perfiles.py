@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pygame
 
-from interfaz import boton, escribir, papel, MUSGO
+from interfaz import boton, escribir, papel, texto_renderizado, MUSGO, TINTA
 
 
 @dataclass
@@ -32,6 +32,7 @@ class SelectorJugadores:
 
     NUEVA = pygame.Rect(490, 490, 330, 54)
     CONTINUAR = pygame.Rect(140, 490, 330, 54)
+    CAMPO_NOMBRE = pygame.Rect(210, 254, 540, 66)
 
     def __init__(self, ruta_anterior):
         """Recupera perfiles válidos e identifica un diario de versiones anteriores."""
@@ -40,6 +41,8 @@ class SelectorJugadores:
         self.perfiles = []
         self.indice = 0
         self.editando = False
+        self.enfocado = False
+        self.inicio_cursor = 0
         self.nombre = ''
         self.error = ''
         if ruta_anterior.is_file():
@@ -61,7 +64,16 @@ class SelectorJugadores:
         self.editando = True
         self.nombre = ''
         self.error = ''
-        pygame.key.start_text_input()
+        self.enfocar(True)
+
+    def enfocar(self, activo):
+        """Muestra el foco del campo y controla la entrada de texto de SDL."""
+        self.enfocado = activo
+        self.inicio_cursor = pygame.time.get_ticks()
+        if activo:
+            pygame.key.start_text_input()
+        else:
+            pygame.key.stop_text_input()
 
     def confirmar(self):
         """Abre el perfil elegido o crea el nuevo si su nombre es válido."""
@@ -85,18 +97,22 @@ class SelectorJugadores:
         self.perfiles.append(perfil)
         self.indice = len(self.perfiles) - 1
         self.editando = False
-        pygame.key.stop_text_input()
+        self.enfocar(False)
         return perfil
 
     def evento(self, evento):
         """Procesa teclado y devuelve un perfil al confirmar."""
-        if self.editando and evento.type == pygame.TEXTINPUT:
+        if self.editando and self.enfocado and evento.type == pygame.TEXTINPUT:
             self.nombre = (self.nombre + ''.join(c for c in evento.text if c.isprintable()))[:32]
+            self.inicio_cursor = pygame.time.get_ticks()
         elif evento.type == pygame.KEYDOWN:
             if evento.key == pygame.K_RETURN:
                 return self.confirmar()
-            if self.editando and evento.key == pygame.K_BACKSPACE:
+            if self.editando and evento.key == pygame.K_TAB:
+                self.enfocar(True)
+            elif self.editando and self.enfocado and evento.key == pygame.K_BACKSPACE:
                 self.nombre = self.nombre[:-1]
+                self.inicio_cursor = pygame.time.get_ticks()
             elif not self.editando and evento.key == pygame.K_n:
                 self.nuevo()
             elif not self.editando and self.perfiles and evento.key in (pygame.K_UP, pygame.K_DOWN):
@@ -111,8 +127,25 @@ class SelectorJugadores:
         hay_perfiles = bool(self.perfiles)
         if self.editando:
             escribir(pantalla, 'Nueva partida', (480, 210), 26, negrita=True)
-            papel(pantalla, (210, 254, 540, 66))
-            escribir(pantalla, self.nombre + '│', (480, 287), 27, ancho=510)
+            campo = self.CAMPO_NOMBRE
+            if activar and puntero is not None:
+                if campo.collidepoint(puntero):
+                    self.enfocar(True)
+                elif not self.NUEVA.collidepoint(puntero):
+                    self.enfocar(False)
+            papel(pantalla, campo)
+            izquierda = campo.left + 22
+            if self.nombre:
+                texto = texto_renderizado(self.nombre, 27, TINTA, False, 484, False)
+                pantalla.blit(texto, texto.get_rect(midleft=(izquierda, campo.centery)))
+                izquierda += texto.get_width() + 3
+            elif not self.enfocado:
+                escribir(pantalla, 'Tu nombre', campo.center, 24, MUSGO)
+            if self.enfocado:
+                pygame.draw.rect(pantalla, MUSGO, campo, 3, border_radius=9)
+                if (pygame.time.get_ticks() - self.inicio_cursor) % 1000 < 550:
+                    pygame.draw.line(pantalla, TINTA, (izquierda, campo.centery - 15),
+                                     (izquierda, campo.centery + 15), 2)
             escribir(pantalla, 'Escribí tu nombre y presioná Enter', (480, 359), 22)
             boton(pantalla, self.NUEVA, 'Empezar')
             if hay_perfiles:
@@ -137,7 +170,7 @@ class SelectorJugadores:
                 if self.editando and hay_perfiles:
                     self.editando = False
                     self.error = ''
-                    pygame.key.stop_text_input()
+                    self.enfocar(False)
                 elif not self.editando:
                     return self.confirmar()
         return None
