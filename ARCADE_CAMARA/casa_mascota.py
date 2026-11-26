@@ -16,6 +16,9 @@ HABITACION = pygame.Rect(53, 159, 854, 462)
 MASCOTA = pygame.Rect(399, 378, 162, 139)
 CENTRO_MASCOTA = (480, 448)
 BOCA = (480, 467)
+CONTACTO_JUGUETE = (550, 457)
+TIEMPO_LANZAMIENTO = .55
+TIEMPO_REGRESO = .8
 PUERTA = pygame.Rect(641, 364, 137, 73)
 TIRADOR = (716, 399)
 OBJETOS = {'comida': (166, 477), 'esponja': (835, 477),
@@ -29,7 +32,7 @@ def fondo_habitacion():
     return pygame.transform.smoothscale(pygame.image.load(str(ruta)).convert(), HABITACION.size)
 
 
-def dibujar_objeto(s, nombre, pos):
+def dibujar_objeto(s, nombre, pos, giro=0):
     """Dibuja los objetos que se pueden agarrar, con su contorno visible."""
     x, y = map(round, pos)
     if nombre == 'esponja':
@@ -46,10 +49,12 @@ def dibujar_objeto(s, nombre, pos):
     elif nombre == 'pelota':
         pygame.draw.circle(s,(113,53,89),(x,y),17)
         pygame.draw.circle(s,(224,120,153),(x-1,y-2),14)
-        pygame.draw.arc(s,(255,218,180),(x-11,y-15,18,23),.2,2.6,3)
+        pygame.draw.arc(s,(255,218,180),(x-11,y-15,18,23),.2 + giro,2.6 + giro,3)
     else:
         pygame.draw.circle(s,(44,85,84),(x,y),21,7)
         pygame.draw.circle(s,(139,212,186),(x-1,y-1),19,4)
+        marca = (round(x + 17 * math.cos(giro)), round(y + 17 * math.sin(giro)))
+        pygame.draw.circle(s,(250,222,150),marca,3)
 
 
 class CasaMascota:
@@ -237,12 +242,11 @@ class CasaMascota:
             pygame.draw.circle(pantalla,(222,245,232),(808 + i*12,472 - i%2*6),9)
 
         salto = 0
-        avance = 0
         if self.vuelo:
             juguete, origen, inicio = self.vuelo
-            avance = min(1, (ahora - inicio)/.75)
-            salto = 45 * math.sin(avance*math.pi)
-            if avance >= 1:
+            tiempo = ahora - inicio
+            salto = 36 * math.sin(math.pi * min(1, tiempo / 1.1))
+            if tiempo >= TIEMPO_LANZAMIENTO + TIEMPO_REGRESO:
                 self.vuelo = None
                 self.cuidar('Juego', ahora)
         activo = ahora < self.hasta
@@ -250,15 +254,28 @@ class CasaMascota:
         if activo and self.accion == 'Comida':
             tiempo_comiendo = 1.8 - (self.hasta - ahora)
             boca_abierta = tiempo_comiendo < .8 and int(tiempo_comiendo * 9) % 2 == 0
-        if self.vuelo and avance > .68:
-            boca_abierta = True
+        if self.vuelo:
+            boca_abierta = False
         mascota = (CENTRO_MASCOTA[0], CENTRO_MASCOTA[1] - salto)
         pygame.draw.ellipse(pantalla,(91,81,49),(414,512,132,18))
         dibujar_familiar(pantalla,mascota,not boca_abierta,ahora,prenda=self.prenda,escala=1.62)
         if self.vuelo:
-            x = origen[0] + (BOCA[0] - origen[0])*avance
-            y = origen[1] + (BOCA[1] - origen[1])*avance - 100*math.sin(avance*math.pi)
-            dibujar_objeto(pantalla,juguete,(x,y))
+            regreso = max(0, (tiempo - TIEMPO_LANZAMIENTO) / TIEMPO_REGRESO)
+            if regreso:
+                destino = OBJETOS[juguete]
+                avance = 1 - (1 - regreso) ** 2
+                x, y = pygame.Vector2(CONTACTO_JUGUETE).lerp(destino, avance)
+                y -= 37 * math.sin(math.pi * regreso)
+            else:
+                avance = tiempo / TIEMPO_LANZAMIENTO
+                x, y = pygame.Vector2(origen).lerp(CONTACTO_JUGUETE, avance)
+                y -= 60 * math.sin(math.pi * avance)
+            dibujar_objeto(pantalla,juguete,(x,y),tiempo * 11 % math.tau)
+            if abs(tiempo - TIEMPO_LANZAMIENTO) < .09:
+                cx, cy = CONTACTO_JUGUETE
+                for dx, dy in ((1, -1), (1, 0), (1, 1)):
+                    pygame.draw.line(pantalla,(255,226,130),
+                                     (cx + dx*22, cy + dy*18), (cx + dx*31, cy + dy*27),2)
 
         for objeto, posicion in OBJETOS.items():
             volando = self.vuelo and objeto == self.vuelo[0]
