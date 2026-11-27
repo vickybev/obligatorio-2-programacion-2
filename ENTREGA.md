@@ -18,8 +18,8 @@ Entrega el 27/11/2026 a las 14:00. Defensa en clase el 4/12. La casita de los he
 
 ## GitHub
 
-- El repositorio es privado. Queda confirmar el usuario de GitHub del docente y su modalidad de acceso.
-- El historial cumple el mínimo de 12 commits en cuatro fechas distintas, con cambios desde el 20/11. Para revisar el historial, usar la vista de commits de GitHub o el comando de abajo.
+- El repositorio es público y se puede consultar sin iniciar sesión.
+- El historial supera el mínimo de 12 commits en cuatro fechas distintas, con cambios registrados en seis fechas desde el 20/11. Para revisar el historial, usar la vista de commits de GitHub o el comando de abajo.
 
 ```powershell
 git log main --format="%h %ad %s" --date=short
@@ -29,4 +29,4 @@ git log main --format="%h %ad %s" --date=short
 
 El PDF con los enlaces a Drive y GitHub ya se subió a Gestión.
 
-La copia local preparada para Drive contiene el juego con sus recursos, la guía y la declaración de IA, además del informe y el póster. Queda por verificar que Drive tenga la última copia y que el docente pueda abrir ambos enlaces.
+El informe y el póster están disponibles en este repositorio y en Drive. El paquete completo para Drive reúne la carpeta del juego con sus recursos, la guía y la declaración de IA, junto con el informe y el póster. La constancia del PDF en Gestión corresponde al envío de la estudiante.
