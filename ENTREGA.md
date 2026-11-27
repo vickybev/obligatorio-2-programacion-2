@@ -8,7 +8,8 @@ Entrega el 27/11/2026 a las 14:00. Defensa en clase el 4/12. La casita de los he
 - [x] Apertura, lectura, espejado y detección en vision.py. Mouse y teclado disponibles para la navegación.
 - [x] README con instalación, controles, condiciones de detección y mapa de módulos.
 - [x] Informe actualizado de cuatro páginas y póster digital.
-- [ ] Probar en webcam los cuatro minijuegos, recuperar la mano tras perder la detección, repetir una partida y comprobar que cerrar con la X libera la cámara. El arranque y el cierre con cámara no disponible ya se comprobaron con una simulación.
+- [x] Probar los cuatro minijuegos con webcam. La captura de bichitos del nivel 2 se volvió a probar después de corregir el bonus de la luciérnaga.
+- [ ] Volver a comprobar en webcam la recuperación tras perder la mano, la repetición de una partida y la liberación de la cámara al cerrar con la X. El arranque y cierre sin cámara se probaron con una simulación.
 - [x] Revisar los tiempos, metas y docstrings de los cuatro módulos de reglas. También quedaron documentados el arranque en main.py y la captura en vision.py.
 - [ ] Completar la revisión de constantes y docstrings en los demás módulos y repasar las partes clave para la defensa.
 - [x] Enlazar desde el README la declaración de uso de IA, los prompts registrados y la procedencia de los recursos.
@@ -26,4 +27,6 @@ git log main --format="%h %ad %s" --date=short
 
 ## Entrega por Drive
 
-La carpeta para Drive contiene el juego con sus recursos, README y declaración de IA, además del informe y el póster. El PDF 160353.pdf para Gestión incluye los enlaces a Drive y GitHub. Subir a Drive la última copia de la carpeta y confirmar el acceso del docente a ambos enlaces antes de entregar.
+El PDF con los enlaces a Drive y GitHub ya se subió a Gestión.
+
+La copia local preparada para Drive contiene el juego con sus recursos, la guía y la declaración de IA, además del informe y el póster. Queda por verificar que Drive tenga la última copia y que el docente pueda abrir ambos enlaces.
