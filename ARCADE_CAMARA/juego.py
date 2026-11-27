@@ -78,7 +78,8 @@ class Partida:
             if distancia < 135 and not cerrada:
                 b['vx'] += dx/max(distancia,1)*220*dt
                 b['vy'] += dy/max(distancia,1)*220*dt
-            if self.nivel == 1 and not self.luz and not b['malo'] and rapidez > 520 and distancia < 105:
+            if (self.nivel == 1 and not self.luz and not cerrada and not b['malo']
+                    and not b.get('asustado') and rapidez > 520 and distancia < 105):
                 b['asustado'] = .45
                 b['vx'] += dx / max(distancia, 1) * 95
                 b['vy'] += dy / max(distancia, 1) * 95
@@ -130,8 +131,8 @@ class Partida:
                 self.eventos.append(('captura', tuple(pos), 0))
                 return
             alcance = 82 if self.luz else 53
-            cerca = [b for b in self.bichos if math.dist(pos,(b['x'],b['y'])) < alcance
-                     and (self.luz or not b.get('asustado'))]
+            # El susto cambia el vuelo, pero el bichito sigue siendo atrapable.
+            cerca = [b for b in self.bichos if math.dist(pos,(b['x'],b['y'])) < alcance]
             if cerca:
                 b = min(cerca,key=lambda b:math.dist(pos,(b['x'],b['y'])))
                 self.bichos.remove(b)
