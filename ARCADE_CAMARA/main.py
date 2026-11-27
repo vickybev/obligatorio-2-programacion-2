@@ -296,6 +296,9 @@ def main():
                     andando = False
                 elif estado == 'perfiles':
                     if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
+                        if jugadores.pendiente_borrar is not None:
+                            jugadores.cancelar_borrado()
+                            continue
                         jugadores.enfocar(False)
                         if perfil_activo is None:
                             andando = False
@@ -437,6 +440,8 @@ def main():
                 panel_papel(pantalla,(42,40,876,604))
             if estado == 'perfiles':
                 elegido_perfil = jugadores.dibujar(pantalla, puntero, activar)
+                if perfil_activo is not None and perfil_activo not in jugadores.perfiles:
+                    perfil_activo = None
                 if elegido_perfil is not None:
                     perfil_activo = elegido_perfil
                     diario = Diario(perfil_activo.ruta_diario)
@@ -662,11 +667,22 @@ def main():
                 panel_papel(pantalla,(NIDO[0]-109,NIDO[1]+130,218,30))
                 escribir(pantalla,'Bolsa Sol' if partida.nivel == 2 else 'Bolsita del bosque',(NIDO[0],NIDO[1]+145),18,negrita=True)
                 if partida.nivel == 2:
-                    pygame.draw.ellipse(pantalla, (217, 201, 245),
-                                        (REFUGIO_LUNA[0]-85, REFUGIO_LUNA[1]-56, 170, 112), 4)
-                    panel_papel(pantalla, (REFUGIO_LUNA[0]-74, REFUGIO_LUNA[1]-78, 148, 33))
-                    escribir(pantalla, 'Luna · Soltá acá' if partida.carga and partida.carga.get('luna') else 'Bolsa Luna',
-                             (REFUGIO_LUNA[0], REFUGIO_LUNA[1]-61), 18, negrita=True)
+                    luna_x, luna_y = REFUGIO_LUNA
+                    aro = pygame.Rect(luna_x-85, luna_y-56,170,112)
+                    entrega_luna = partida.carga and partida.carga.get('luna')
+                    color_luna = (251,231,155) if entrega_luna else (212,187,247)
+                    pygame.draw.ellipse(pantalla,(53,39,78),aro,12)
+                    pygame.draw.ellipse(pantalla,color_luna,aro.inflate(-6,-6),3)
+                    pygame.draw.ellipse(pantalla,(142,111,183),aro.inflate(-19,-19),2)
+                    medallon = (luna_x,luna_y+33)
+                    pygame.draw.circle(pantalla,(53,39,78),medallon,16)
+                    pygame.draw.circle(pantalla,color_luna,medallon,12)
+                    pygame.draw.circle(pantalla,(53,39,78),(luna_x+6,luna_y+29),10)
+                    for dx in (-57,57):
+                        pygame.draw.circle(pantalla,color_luna,(luna_x+dx,luna_y+24),3)
+                    panel_papel(pantalla,(luna_x-85,luna_y-85,170,31))
+                    escribir(pantalla,'Luna · Soltá acá' if entrega_luna else 'Aro lunar',
+                             (luna_x,luna_y-70),19,negrita=True)
                 visibles = len(partida.bichos)
                 if preparando:
                     visibles = round(visibles * max(0, 1 - cuenta_inicio / 1.1))

@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pygame
 
-from interfaz import boton, escribir, papel, texto_renderizado, MUSGO, TINTA
+from interfaz import boton, escribir, papel, texto_renderizado, MUSGO, TINTA, PAPEL
 
 
 @dataclass
@@ -32,6 +32,9 @@ class SelectorJugadores:
 
     NUEVA = pygame.Rect(490, 490, 330, 54)
     CONTINUAR = pygame.Rect(140, 490, 330, 54)
+    BORRAR = pygame.Rect(352, 554, 256, 42)
+    CANCELAR_BORRADO = pygame.Rect(180, 432, 278, 52)
+    CONFIRMAR_BORRADO = pygame.Rect(502, 432, 278, 52)
     CAMPO_NOMBRE = pygame.Rect(210, 254, 540, 66)
 
     def __init__(self, ruta_anterior):
@@ -45,6 +48,7 @@ class SelectorJugadores:
         self.inicio_cursor = 0
         self.nombre = ''
         self.error = ''
+        self.pendiente_borrar = None
         if ruta_anterior.is_file():
             self.perfiles.append(Perfil('Partida anterior', ruta_anterior))
         for archivo in sorted(self.carpeta.glob('*/perfil.json'), key=lambda p: p.parent.name):
@@ -100,8 +104,65 @@ class SelectorJugadores:
         self.enfocar(False)
         return perfil
 
+    def pedir_borrado(self):
+        self.pendiente_borrar = self.perfiles[self.indice]
+        self.error = ''
+
+    def cancelar_borrado(self):
+        self.pendiente_borrar = None
+        self.error = ''
+
+    def borrar(self):
+        """Quita la partida del selector y conserva los archivos en borradas."""
+        perfil = self.pendiente_borrar
+        destino = self.carpeta / '.borradas' / uuid4().hex
+        try:
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            if perfil.archivo is not None:
+                perfil.archivo.parent.rename(destino)
+            else:
+                destino.mkdir()
+                perfil.ruta_diario.rename(destino / perfil.ruta_diario.name)
+                mascota = perfil.ruta_diario.with_name('mascota.json')
+                try:
+                    if mascota.is_file():
+                        mascota.rename(destino / mascota.name)
+                except OSError:
+                    (destino / perfil.ruta_diario.name).rename(perfil.ruta_diario)
+                    raise
+        except OSError:
+            self.error = 'No se pudo borrar la partida. Podés volver a intentar.'
+            return
+        self.perfiles.remove(perfil)
+        self.indice = min(self.indice, max(0, len(self.perfiles) - 1))
+        self.cancelar_borrado()
+        if not self.perfiles:
+            self.nuevo()
+
+    def dibujar_confirmacion(self, pantalla, puntero, activar):
+        perfil = self.pendiente_borrar
+        escribir(pantalla, '¿Borrar esta partida?', (480, 220), 32, negrita=True)
+        escribir(pantalla, perfil.nombre, (480, 290), 30, ancho=610, titulo=True)
+        escribir(pantalla, 'Se quitarán sus niveles, premios y compañero del selector.',
+                 (480, 352), 22, ancho=660)
+        boton(pantalla, self.CANCELAR_BORRADO, 'Cancelar',
+              puntero is not None and self.CANCELAR_BORRADO.collidepoint(puntero))
+        borrar = self.CONFIRMAR_BORRADO
+        pygame.draw.rect(pantalla, (137, 64, 63), borrar, border_radius=7)
+        if puntero is not None and borrar.collidepoint(puntero):
+            pygame.draw.rect(pantalla, (213, 152, 119), borrar, 3, border_radius=7)
+        escribir(pantalla, 'Sí, borrar partida', borrar.center, 25, PAPEL, negrita=True)
+        escribir(pantalla, self.error, (480, 548), 22, ancho=650)
+        if activar and puntero is not None:
+            if self.CANCELAR_BORRADO.collidepoint(puntero):
+                self.cancelar_borrado()
+            elif borrar.collidepoint(puntero):
+                self.borrar()
+
     def evento(self, evento):
         """Procesa teclado y devuelve un perfil al confirmar."""
+        if self.pendiente_borrar is not None:
+            return None
         if self.editando and self.enfocado and evento.type == pygame.TEXTINPUT:
             self.nombre = (self.nombre + ''.join(c for c in evento.text if c.isprintable()))[:32]
             self.inicio_cursor = pygame.time.get_ticks()
@@ -113,6 +174,8 @@ class SelectorJugadores:
             elif self.editando and self.enfocado and evento.key == pygame.K_BACKSPACE:
                 self.nombre = self.nombre[:-1]
                 self.inicio_cursor = pygame.time.get_ticks()
+            elif not self.editando and self.perfiles and evento.key == pygame.K_DELETE:
+                self.pedir_borrado()
             elif not self.editando and evento.key == pygame.K_n:
                 self.nuevo()
             elif not self.editando and self.perfiles and evento.key in (pygame.K_UP, pygame.K_DOWN):
@@ -124,6 +187,9 @@ class SelectorJugadores:
         """Dibuja la portada de jugadores y admite selección por clic o pinza."""
         papel(pantalla, (88, 62, 784, 555))
         escribir(pantalla, '¿Quién visita la casita?', (480, 130), 40, titulo=True)
+        if self.pendiente_borrar is not None:
+            self.dibujar_confirmacion(pantalla, puntero, activar)
+            return None
         hay_perfiles = bool(self.perfiles)
         if self.editando:
             escribir(pantalla, 'Nueva partida', (480, 210), 26, negrita=True)
@@ -160,9 +226,15 @@ class SelectorJugadores:
                     self.indice = i
             boton(pantalla, self.CONTINUAR, 'Continuar · Enter')
             boton(pantalla, self.NUEVA, 'Nueva partida · N')
-        escribir(pantalla, self.error or ('Elegí con ↑ y ↓' if len(self.perfiles) > 4 and not self.editando else ''), (480, 578), 20, MUSGO)
+            pygame.draw.rect(pantalla, (170, 109, 94), self.BORRAR, 1, border_radius=7)
+            if puntero is not None and self.BORRAR.collidepoint(puntero):
+                pygame.draw.rect(pantalla, (239, 216, 195), self.BORRAR, border_radius=7)
+            escribir(pantalla, 'Borrar partida…', self.BORRAR.center, 21, (128, 62, 58))
+        escribir(pantalla, self.error or ('Elegí con ↑ y ↓' if len(self.perfiles) > 4 and not self.editando else ''), (480, 470), 20, MUSGO)
         if activar and puntero is not None:
-            if self.NUEVA.collidepoint(puntero):
+            if not self.editando and hay_perfiles and self.BORRAR.collidepoint(puntero):
+                self.pedir_borrado()
+            elif self.NUEVA.collidepoint(puntero):
                 if self.editando:
                     return self.confirmar()
                 self.nuevo()
