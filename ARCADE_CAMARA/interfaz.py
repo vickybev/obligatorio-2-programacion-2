@@ -78,6 +78,20 @@ def boton(s,rect,label,activo=False):
     escribir(s,label,rect.center,27,PAPEL,ancho=rect.width-32,titulo=True)
 
 
+def foco_control(s, rect, puntero, activar, ahora):
+    """Marca el control señalado y confirma la pinza o el clic."""
+    if puntero is None or not rect.collidepoint(puntero):
+        return
+    marco = rect.inflate(18, 8)
+    pygame.draw.rect(s, TINTA, marco.inflate(4, 4), 3, border_radius=8)
+    pygame.draw.rect(s, (255, 233, 166), marco, 3 if activar else 2, border_radius=7)
+    brillo = round(3 + (1 + math.sin(ahora * 5)) * 1.5)
+    for x in (marco.left, marco.right):
+        y = marco.centery
+        pygame.draw.polygon(s, (255, 233, 166),
+                            [(x, y-brillo), (x+brillo, y), (x, y+brillo), (x-brillo, y)])
+
+
 def separador(s,x,y,ancho=160):
     pygame.draw.line(s,BORDE,(x-ancho//2,y),(x-15,y))
     pygame.draw.line(s,BORDE,(x+15,y),(x+ancho//2,y))

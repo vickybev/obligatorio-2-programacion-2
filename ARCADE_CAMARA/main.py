@@ -15,7 +15,7 @@ from sonido import Sonido
 from particulas import Particulas
 from cartas import Carrusel as Coleccion, cursor as cursor_cartas
 from identidad import Identidad, NOMBRE, fuente
-from interfaz import cabecera, pie as panel_pie, papel as panel_papel, escribir, lectura, MUSGO, boton, separador, TINTA, PAPEL
+from interfaz import foco_control, cabecera, pie as panel_pie, papel as panel_papel, escribir, lectura, texto_renderizado, MUSGO, boton, separador, TINTA, PAPEL
 from faroles import Faroles, cursor as cursor_faroles
 from banquete import Banquete
 from sellos import Sellos
@@ -274,6 +274,9 @@ def main():
     regreso = Regreso()
     jugar = pygame.Rect(305,522,350,62)
     repetir = REPETIR
+    entrada_menu = 0.0
+    menu_visible = False
+    logo_animado = logo_menu.copy() if logo_menu is not None else None
     try:
         entrada = abrir_camara(args.camera)
         if entrada is None:
@@ -405,6 +408,9 @@ def main():
                 fondo_activo = fondos_niveles[elegido - 1][nivel]
             fondo_activo.actualizar(0 if estado=="juego" and (pausado or sin_mano) else dt)
             render_menu=estado=='menu'
+            if render_menu and not menu_visible:
+                entrada_menu = ahora
+            menu_visible = render_menu
             fondo_activo.dibujar(lienzo)
             if estado!='juego':
                 pygame.draw.rect(lienzo,MUSGO,(0,665,ancho_vista,55))
@@ -445,8 +451,11 @@ def main():
                 pie=pygame.Surface((ancho_vista,55),pygame.SRCALPHA)
                 pie.fill((34,57,39,190))
                 pantalla.blit(pie,(0,665))
-                if logo_menu is not None:
-                    pantalla.blit(logo_menu,logo_menu.get_rect(center=(640,73)))
+                avance_logo = min(1, (ahora - entrada_menu) / .32)
+                if logo_animado is not None:
+                    logo_animado.set_alpha(round(255 * avance_logo))
+                    pantalla.blit(logo_animado, logo_animado.get_rect(
+                        center=(640, 73 + round(9 * (1 - avance_logo) ** 2))))
                 palma=pos
                 abierta=control is not None and bool(control.puntos)
                 coleccion.actualizar(dt,[palma],gesto=abierta,cerrada=cerrada)
@@ -476,7 +485,7 @@ def main():
                     escribir(pantalla, perfil_activo.nombre, (128,150), 19, PAPEL, ancho=200)
                 if activar and puntero is not None and cambiar.collidepoint(puntero):
                     estado = 'perfiles'
-                if click or (mordida and puntero is not None and DIARIO_MENU.collidepoint(puntero)) or (coleccion.listo):
+                if estado == 'menu' and (click or (mordida and puntero is not None and DIARIO_MENU.collidepoint(puntero)) or coleccion.listo):
                     if puntero and DIARIO_MENU.collidepoint(puntero):
                         estado='diario'
                     else:
@@ -490,7 +499,18 @@ def main():
                     mano_lateral(pantalla, (250 - 95 * fase, 634), 0, 55)
                     pygame.draw.line(pantalla, PAPEL, (259, 626), (154, 626), 2)
                     pygame.draw.polygon(pantalla, PAPEL, [(146,626),(156,621),(156,631)])
-                escribir(pantalla,'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir',(640,691),21,PAPEL)
+                ayuda_menu = 'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir'
+                for rect, ayuda in ((casa, 'Hacé pinza para entrar a la casa del compañero'),
+                                    (cambiar, 'Hacé pinza para cambiar de jugador'),
+                                    (DIARIO_MENU, 'Hacé pinza para abrir el diario')):
+                    if puntero is not None and rect.collidepoint(puntero):
+                        foco_control(pantalla, rect, puntero, activar, ahora)
+                        ayuda_menu = ayuda
+                texto_ayuda = texto_renderizado(ayuda_menu, 21, PAPEL, False, 1180, False)
+                if avance_logo < 1:
+                    texto_ayuda = texto_ayuda.copy()
+                    texto_ayuda.set_alpha(round(255 * avance_logo))
+                pantalla.blit(texto_ayuda, texto_ayuda.get_rect(center=(640,691)))
 
             elif estado == 'mascota':
                 if click:
@@ -564,6 +584,7 @@ def main():
                     escribir(pantalla, 'Practicá una pinza arriba', jugar.center, 26, negrita=True)
                 else:
                     boton(pantalla,jugar,'Comenzar la aventura',puntero is not None and jugar.collidepoint(puntero))
+                    foco_control(pantalla, jugar, puntero, activar, ahora)
                     if activar and puntero is not None and jugar.collidepoint(puntero):
                         partida={1:Partida,2:Faroles,3:Banquete,4:Sellos}[elegido](nivel)
                         efectos = Efectos()
@@ -685,6 +706,7 @@ def main():
                 escribir(pantalla,ayudas_nivel[elegido - 1][nivel],(480,391),21,ancho=420)
             if estado not in ('menu','perfiles'):
                 regreso.dibujar(pantalla)
+                foco_control(pantalla, regreso.rect, puntero, activar, ahora)
             if mostrar_camara and frame is not None:
                 guia_camara(pantalla,frame,control,fuentes,cerrada,estado=="juego" and elegido in (2,3,4))
             if pos is not None and estado=='menu':
