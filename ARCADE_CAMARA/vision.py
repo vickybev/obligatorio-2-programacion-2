@@ -107,19 +107,25 @@ class ControlMano:
         self.posicion_palma=destino if self.posicion_palma is None else tuple(a+(b-a)*alpha_palma for a,b in zip(self.posicion_palma,destino))
         # El encuadre completo comparte coordenadas con la cámara visible.
         # No aplicar ganancia ni recorte central al cursor.
-        punto=centro if referencia=='palma' else ((puntos[8].x,puntos[8].y) if referencia=='indice' else self.punto_camara)
-        if referencia=='indice':
+        usa_indice = referencia in ('indice', 'pluma')
+        punto=centro if referencia=='palma' else ((puntos[8].x,puntos[8].y) if usa_indice else self.punto_camara)
+        if usa_indice:
             # Al plegar el índice para pinzar, trasladar el cursor con la palma.
             # Así cerrar dedos no equivale a mover la mano.
             if proporcion< ANCLA_PINZA_ENTRADA and self.ancla_pinza is None:
-                self.ancla_pinza=self.punto_anterior if self.referencia==referencia and hasattr(self,'punto_anterior') else punto
+                self.ancla_pinza=self.punto_anterior if self.referencia==referencia and self.posicion is not None else punto
                 self.ancla_palma=centro
             if self.ancla_pinza is not None:
                 if proporcion> ANCLA_PINZA_SALIDA:
                     self.ancla_pinza=None
                     self.ancla_palma=None
                 else:
-                    punto=tuple(a+b-c for a,b,c in zip(self.ancla_pinza,centro,self.ancla_palma))
+                    punto_anclado = tuple(a+b-c for a,b,c in zip(self.ancla_pinza,centro,self.ancla_palma))
+                    if referencia == 'pluma':
+                        apertura = max(0, (proporcion-PINZA_APERTURA)/(ANCLA_PINZA_SALIDA-PINZA_APERTURA))
+                        punto = tuple(a+(b-a)*apertura for a,b in zip(punto_anclado,punto))
+                    else:
+                        punto = punto_anclado
         else:
             self.ancla_pinza=None
             self.ancla_palma=None
@@ -134,7 +140,7 @@ class ControlMano:
         else:
             # Respuesta rápida al trasladar la mano; amortiguación al sostenerla.
             desplazamiento=math.dist(self.posicion,objetivo)
-            tau=.018 if desplazamiento>25 else .04
+            tau = .055 if referencia == 'pluma' else (.018 if desplazamiento>25 else .04)
             alpha=1-math.exp(-dt/tau)
             self.posicion = tuple(a + (b-a)*alpha for a, b in zip(self.posicion, objetivo))
         self.referencia=referencia

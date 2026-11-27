@@ -192,6 +192,11 @@ def main():
     ventana = pygame.display.set_mode((ancho_vista,ALTO), pygame.RESIZABLE)
     lienzo=pygame.Surface((ancho_vista,ALTO))
     contenido=pygame.Surface((ANCHO,ALTO))
+    vista_escalada = None
+    velo_juego = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
+    velo_juego.fill((9, 18, 25, 185))
+    velo_bichos = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
+    velo_bichos.fill((9, 18, 25, 165))
     pantalla=contenido
     identidad=Identidad()
     logo_menu=None
@@ -371,7 +376,9 @@ def main():
                 referencia = 'indice'
                 if estado in ('menu', 'perfiles') or (elegido == 1 and estado == 'instrucciones') or (estado == 'juego' and elegido in (1, 2, 3)):
                     referencia = 'palma'
-                elif estado == 'mascota' or (estado == 'juego' and elegido == 4):
+                elif estado == 'juego' and elegido == 4:
+                    referencia = 'pluma'
+                elif estado == 'mascota':
                     referencia = 'pinza'
                 entrada.configurar(ancho_control,ALTO,referencia)
                 muestra=entrada.leer()
@@ -635,9 +642,7 @@ def main():
                     partida.eventos.clear()
                 partida.dibujar(pantalla,fuentes,ahora)
                 if pausado or sin_mano:
-                    velo=pygame.Surface((ANCHO,ALTO),pygame.SRCALPHA)
-                    velo.fill((9,18,25,185))
-                    pantalla.blit(velo,(0,0))
+                    pantalla.blit(velo_juego,(0,0))
                     texto(pantalla,fuentes,'PAUSA' if pausado else 'MOSTRÁ TU MANO',(480,310),56,CREMA,True)
                     texto(pantalla,fuentes,'P para continuar' if pausado else 'El juego y el tiempo están detenidos.',(480,366),28,LIMA,True)
                 if partida.fin:
@@ -706,9 +711,7 @@ def main():
                 mensaje = partida.mensaje if partida.aviso>0 else ('Mantené la pinza y soltá en la bolsita' if partida.carga else 'Acercate a un bichito y cerrá la pinza')
                 panel_pie(pantalla,mensaje,compacto=True)
                 if pausado or sin_mano:
-                    velo=pygame.Surface((ANCHO,ALTO),pygame.SRCALPHA)
-                    velo.fill((9,18,25,165))
-                    pantalla.blit(velo,(0,0))
+                    pantalla.blit(velo_bichos,(0,0))
                     texto(pantalla,fuentes,'PAUSA' if pausado else '¿Dónde está mi monstruo?',(480,310),56,CREMA,True)
                     texto(pantalla,fuentes,'P para continuar' if pausado else 'Mostrá la mano completa. El tiempo está detenido.',(480,366),28,LIMA,True)
                 if celebracion > 0:
@@ -792,7 +795,11 @@ def main():
                         panel_papel(lienzo,(1130,413,140,34))
                         escribir(lienzo,'Tu compañero',(1200,430),16,negrita=True)
             ventana.fill(FONDO)
-            vista=lienzo if medida==lienzo.get_size() else pygame.transform.smoothscale(lienzo,medida)
+            vista = lienzo
+            if medida != lienzo.get_size():
+                if vista_escalada is None or vista_escalada.get_size() != medida:
+                    vista_escalada = pygame.Surface(medida, depth=lienzo)
+                vista = pygame.transform.smoothscale(lienzo, medida, vista_escalada)
             ventana.blit(vista,((w-medida[0])//2,(h-medida[1])//2))
             pygame.display.flip()
     finally:
