@@ -49,3 +49,23 @@ def mano_lateral(s,centro,cierre=0,lado=72):
     taille=(round(lado),round(lado*260/300))
     capa=pygame.transform.smoothscale(capa,taille)
     s.blit(capa,capa.get_rect(center=tuple(map(round,centro))))
+
+
+@lru_cache(maxsize=1)
+def palma_frontal():
+    """Ilustra una palma abierta, con los cinco dedos separados."""
+    capa = pygame.Surface((160, 188), pygame.SRCALPHA)
+    contorno = [(56,174),(54,150),(40,130),(17,101),(14,91),(19,85),
+                (28,86),(51,106),(43,39),(45,31),(53,30),(59,36),
+                (68,80),(67,17),(71,10),(79,10),(84,17),(86,75),
+                (93,26),(100,21),(107,23),(111,30),(105,82),
+                (119,49),(126,46),(133,51),(134,57),(125,106),
+                (123,130),(110,151),(108,174)]
+    tinta = (99,65,47)
+    pygame.draw.polygon(capa,(251,213,166),contorno)
+    pygame.draw.lines(capa,tinta,True,contorno,4)
+    pygame.draw.arc(capa,(181,126,90),(58,98,46,35),.4,2.9,3)
+    pygame.draw.arc(capa,(181,126,90),(48,103,42,44),4.1,5.9,3)
+    pygame.draw.rect(capa,(67,98,72),(51,158,63,26),border_radius=6)
+    pygame.draw.line(capa,(217,211,154),(57,167),(107,167),2)
+    return pygame.transform.smoothscale(capa,(87,102))

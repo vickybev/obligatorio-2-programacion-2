@@ -28,7 +28,7 @@ from navegacion import Regreso
 from interfaz import limpiar_cache
 from diario import Diario, REPETIR, VOLVER, DIARIO_MENU, recuerdo
 from companero import Companero, guia as guia_gesto
-from gestos import mano_lateral
+from gestos import palma_frontal
 from perfiles import SelectorJugadores
 from casa_mascota import CasaMascota
 
@@ -276,6 +276,7 @@ def main():
     repetir = REPETIR
     entrada_menu = 0.0
     menu_visible = False
+    guia_menu_vista = False
     logo_animado = logo_menu.copy() if logo_menu is not None else None
     try:
         entrada = abrir_camara(args.camera)
@@ -425,8 +426,9 @@ def main():
                 pantalla.blit(lienzo,(-margen,0))
             if estado=='juego' and frame is not None:
                 if frame is not frame_reflejo or tam_reflejo!=(ANCHO,ALTO):
-                    cam=redimensionar(frame,(ANCHO,ALTO))
-                    reflejo=pygame.image.frombuffer(cam.tobytes(),(ANCHO,ALTO),'BGR').copy()
+                    dimensiones = (frame.shape[1],frame.shape[0])
+                    imagen = pygame.image.frombuffer(frame,dimensiones,'BGR')
+                    reflejo = pygame.transform.scale(imagen,(ANCHO,ALTO))
                     reflejo.set_alpha(48)
                     frame_reflejo=frame
                     tam_reflejo=(ANCHO,ALTO)
@@ -457,7 +459,7 @@ def main():
                     pantalla.blit(logo_animado, logo_animado.get_rect(
                         center=(640, 73 + round(9 * (1 - avance_logo) ** 2))))
                 palma=pos
-                abierta=control is not None and bool(control.puntos)
+                abierta=control is not None and control.mano_abierta
                 coleccion.actualizar(dt,[palma],gesto=abierta,cerrada=cerrada)
                 coleccion.dibujar(pantalla)
                 if frame is not None:
@@ -494,11 +496,20 @@ def main():
                             elegido=seleccion
                             nivel = min(diario.niveles(elegido), 2)
                             estado='instrucciones'
-                if not palma and diario.sellos == 0:
-                    fase = min(1, (ahora % 3) / 1.5)
-                    mano_lateral(pantalla, (250 - 95 * fase, 634), 0, 55)
-                    pygame.draw.line(pantalla, PAPEL, (259, 626), (154, 626), 2)
-                    pygame.draw.polygon(pantalla, PAPEL, [(146,626),(156,621),(156,631)])
+                tiempo_guia = ahora - entrada_menu
+                if not guia_menu_vista:
+                    if tiempo_guia >= 1.85 or activar:
+                        guia_menu_vista = True
+                    else:
+                        panel_papel(pantalla,(403,313,474,171))
+                        escribir(pantalla,'Deslizá la palma abierta',(640,338),29,titulo=True)
+                        escribir(pantalla,'Mostrala a la cámara y movela hacia la izquierda',(640,464),20,ancho=440)
+                        pygame.draw.line(pantalla,MUSGO,(549,409),(731,409),2)
+                        pygame.draw.polygon(pantalla,MUSGO,[(544,409),(556,402),(556,416)])
+                        fase = min(1, max(0, (tiempo_guia - .2) / 1.35))
+                        fase = fase * fase * (3 - 2 * fase)
+                        mano = palma_frontal()
+                        pantalla.blit(mano, mano.get_rect(center=(round(730 - 180 * fase),404)))
                 ayuda_menu = 'Mostrá la palma · Deslizá de derecha a izquierda · Dejala quieta sobre una carta para abrir'
                 for rect, ayuda in ((casa, 'Hacé pinza para entrar a la casa del compañero'),
                                     (cambiar, 'Hacé pinza para cambiar de jugador'),
@@ -574,14 +585,20 @@ def main():
                 escribir(pantalla, f'{meta} {unidad} en {int(segundos)} s', (480, 505), 22, negrita=True)
                 requiere_practica = elegido == 1 and nivel == 0 and not practica_lista
                 if requiere_practica:
-                    blanco = pygame.Rect(420, 266, 120, 100)
-                    pygame.draw.rect(pantalla, MUSGO, blanco, 2, border_radius=14)
-                    if mordida and puntero is not None and blanco.collidepoint(puntero):
-                        practica_lista = True
-                        requiere_practica = False
-                if requiere_practica:
-                    panel_papel(pantalla, jugar)
-                    escribir(pantalla, 'Practicá una pinza arriba', jugar.center, 26, negrita=True)
+                    blanco = pygame.Rect(635,529,146,65)
+                    panel_papel(pantalla,(175,524,610,76),(236,229,203))
+                    escribir(pantalla,'Probá la pinza',(401,543),25,negrita=True)
+                    escribir(pantalla,'Apuntá al círculo y juntá pulgar e índice.',(401,575),20,ancho=428)
+                    centro = blanco.center
+                    pygame.draw.circle(pantalla,MUSGO,centro,26)
+                    pygame.draw.circle(pantalla,(249,221,144),centro,17,2)
+                    pygame.draw.circle(pantalla,(249,221,144),centro,4)
+                    posicion_prueba = puntero if mordida else pos
+                    sobre = posicion_prueba is not None and math.dist(posicion_prueba, centro) <= 32
+                    if sobre:
+                        pygame.draw.circle(pantalla,(190,138,62),centro,30,3)
+                        if mordida:
+                            practica_lista = True
                 else:
                     boton(pantalla,jugar,'Comenzar la aventura',puntero is not None and jugar.collidepoint(puntero))
                     foco_control(pantalla, jugar, puntero, activar, ahora)
@@ -590,7 +607,7 @@ def main():
                         efectos = Efectos()
                         particulas = Particulas()
                         estado,pausado='juego',False
-                avisos_bichos = ('Hacé pinza en el recuadro · El reloj todavía está quieto',
+                avisos_bichos = ('El reloj empieza después de la práctica',
                                  'Acercate despacio para que el bicho no escape',
                                  'Los bichos con luna van a la izquierda y los de sol a la derecha')
                 aviso = 'Completá el nivel para abrir el siguiente · Enter para empezar'
@@ -625,7 +642,8 @@ def main():
             elif estado == 'juego':
                 puntos_antes = partida.puntos
                 if not pausado and not preparando:
-                    partida.actualizar(paso_dt,pos,cerrada,False if preparando else mordida)
+                    partida.actualizar(paso_dt,pos,cerrada,mordida,
+                                       punto_pinza=puntero if mordida else None)
                     efectos.recibir(partida.eventos)
                     sonido.recibir(partida.eventos)
                     particulas.recibir(partida.eventos,elegido)

@@ -6,7 +6,7 @@ from personajes import dibujar_familiar, dibujar_bicho
 from objetos_anime import sprite
 from arte_sellos import sprite as magia
 from bolsa import ilustracion
-from gestos import mano_lateral
+from gestos import mano_lateral, palma_frontal
 
 
 def mezclar(a,b,t):
@@ -23,6 +23,11 @@ def pinza(s,pos,cerrada):
 
 
 @lru_cache(maxsize=1)
+def palma_pequena():
+    return pygame.transform.smoothscale(palma_frontal(),(49,57))
+
+
+@lru_cache(maxsize=1)
 def bolsita():
     im=ilustracion()
     return pygame.transform.smoothscale(im,(90,73)) if im is not None else None
@@ -36,7 +41,7 @@ def dibujar(s,juego,paso,tiempo):
             x=mezclar(48,107,t/2.2)
             dibujar_familiar(s,(x,59),False,tiempo)
             dibujar_bicho(s,(164+math.sin(t*3)*8,50),False,tiempo,.65)
-            pinza(s,(210,28),False)
+            poner(s,palma_pequena(),(mezclar(203,215,t/2.2),49))
         elif paso==1:
             cerrada=1.65<t<3.45
             dibujar_familiar(s,(83,57),cerrada,tiempo)

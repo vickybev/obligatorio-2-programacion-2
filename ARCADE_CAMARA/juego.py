@@ -54,7 +54,7 @@ class Partida:
         """Devuelve el destino de la criatura que llevás en la pinza."""
         return REFUGIO_LUNA if self.carga and self.carga.get('luna') else NIDO
 
-    def actualizar(self, dt, pos, cerrada, mordida):
+    def actualizar(self, dt, pos, cerrada, mordida, punto_pinza=None):
         """Avanza los bichos y aplica la pinza, la entrega y las penalizaciones."""
         if self.fin or pos is None:
             self.pos_anterior = None
@@ -121,6 +121,7 @@ class Partida:
             return
 
         if mordida:
+            pos = punto_pinza if punto_pinza is not None else pos
             if self.bonus and math.dist(pos, self.bonus) < 62:
                 self.bonus = None
                 self.bonus_en = 12.0
